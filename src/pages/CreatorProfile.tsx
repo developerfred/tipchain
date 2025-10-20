@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { TipModal } from '../components/TipModal'
 import { useReadContract } from 'wagmi'
 import { TIPCHAIN_CONTRACT_ADDRESS, TIPCHAIN_ABI } from '../config/contracts'
-import { formatEth, formatTimeAgo, shortenAddress, generateTipLink, copyToClipboard } from '@/lib/utils'
+import { formatEth, formatTimeAgo, shortenAddress, generateTipLink, copyToClipboard } from '../lib/utils'
 import toast from 'react-hot-toast'
 import QRCodeReact from 'qrcode.react'
 
