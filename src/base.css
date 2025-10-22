@@ -5,6 +5,14 @@
 @tailwind utilities;
 
 @layer base {
+ * {
+    @apply border-border outline-ring/50;
+  }
+  
+  html {
+    @apply h-full;
+  }
+
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
@@ -26,6 +34,17 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
+    @apply h-full flex flex-col;
+  }
+
+    body {
+    @apply bg-background text-foreground h-full m-0 p-0;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    /* Support for safe areas in mini apps */
+    padding-top: var(--miniapp-safe-area-top);
+    padding-bottom: var(--miniapp-safe-area-bottom);
+    padding-left: var(--miniapp-safe-area-left);
+    padding-right: var(--miniapp-safe-area-right);
   }
 
   .dark {
@@ -239,5 +258,256 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Mini App specific styles */
+.miniapp-container {
+  @apply h-full flex flex-col;
+  max-height: 100vh;
+  max-height: 100dvh; /* Use dvh for better mobile support */
+  overflow: hidden;
+}
+
+.miniapp-scrollable {
+  @apply flex-1 overflow-y-auto overflow-x-hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.miniapp-header {
+  @apply sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.miniapp-content {
+  @apply flex-1 overflow-y-auto;
+}
+
+/* Container responsive */
+.container {
+  @apply w-full mx-auto px-4 sm:px-6 lg:px-8;
+  max-width: 100%;
+}
+
+@media (min-width: 640px) {
+  .container {
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 768px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1024px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1280px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .container {
+    max-width: 1400px;
+  }
+}
+
+/* Utilities para alinhamento */
+@layer utilities {
+  .step {
+    counter-increment: step;
+  }
+
+  .step:before {
+    @apply absolute w-9 h-9 bg-muted rounded-full font-mono font-medium text-center text-base inline-flex items-center justify-center -indent-px border-4 border-background;
+    @apply ml-[-50px] mt-[-4px];
+    content: counter(step);
+  }
+  
+  /* Flex utilities */
+  .flex-center {
+    @apply flex items-center justify-center;
+  }
+  
+  .flex-between {
+    @apply flex items-center justify-between;
+  }
+  
+  .flex-start {
+    @apply flex items-center justify-start;
+  }
+  
+  .flex-end {
+    @apply flex items-center justify-end;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-muted;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/30 rounded-lg;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/50;
+}
+
+/* Animations */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 100%
+  );
+  background-size: 1000px 100%;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-down {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s ease-out;
+}
+
+/* Gradient text */
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500;
+}
+
+/* Glass effect */
+.glass {
+  @apply bg-white/10 backdrop-blur-lg border border-white/20;
+}
+
+.dark .glass {
+  @apply bg-black/10 backdrop-blur-lg border border-white/10;
+}
+
+/* Responsive text sizes */
+@layer utilities {
+  .text-responsive-xs {
+    @apply text-xs sm:text-sm;
+  }
+  
+  .text-responsive-sm {
+    @apply text-sm sm:text-base;
+  }
+  
+  .text-responsive-base {
+    @apply text-base sm:text-lg;
+  }
+  
+  .text-responsive-lg {
+    @apply text-lg sm:text-xl;
+  }
+  
+  .text-responsive-xl {
+    @apply text-xl sm:text-2xl md:text-3xl;
+  }
+  
+  .text-responsive-2xl {
+    @apply text-2xl sm:text-3xl md:text-4xl;
+  }
+  
+  .text-responsive-3xl {
+    @apply text-3xl sm:text-4xl md:text-5xl;
+  }
+}
+
+/* Safe area padding utilities for mini apps */
+@layer utilities {
+  .pt-safe {
+    padding-top: var(--miniapp-safe-area-top);
+  }
+  
+  .pb-safe {
+    padding-bottom: var(--miniapp-safe-area-bottom);
+  }
+  
+  .pl-safe {
+    padding-left: var(--miniapp-safe-area-left);
+  }
+  
+  .pr-safe {
+    padding-right: var(--miniapp-safe-area-right);
+  }
+  
+  .px-safe {
+    padding-left: var(--miniapp-safe-area-left);
+    padding-right: var(--miniapp-safe-area-right);
+  }
+  
+  .py-safe {
+    padding-top: var(--miniapp-safe-area-top);
+    padding-bottom: var(--miniapp-safe-area-bottom);
+  }
+  
+  .p-safe {
+    padding-top: var(--miniapp-safe-area-top);
+    padding-bottom: var(--miniapp-safe-area-bottom);
+    padding-left: var(--miniapp-safe-area-left);
+    padding-right: var(--miniapp-safe-area-right);
   }
 }
