@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { useAccount, useReadContract } from 'wagmi'
+import { useAccount, useReadContract, useChainId } from 'wagmi'
 import { Link, useNavigate } from 'react-router-dom'
-import { 
-  Heart, 
-  TrendingUp, 
-  Users, 
-  Copy, 
-  ExternalLink, 
+import {
+  Heart,
+  TrendingUp,
+  Users,
+  Copy,
+  ExternalLink,
   Settings,
   Download,
   Share2,
@@ -14,39 +14,40 @@ import {
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
-import { TIPCHAIN_CONTRACT_ADDRESS, TIPCHAIN_ABI } from '../config/contracts'
+import { TIPCHAIN_ABI, getTipChainContractAddress, isNetworkSupported, getNetworkConfig } from '../config/contracts'
 import { formatEth, formatTimeAgo, shortenAddress, generateTipLink, copyToClipboard } from '../lib/utils'
 import toast from 'react-hot-toast'
 import QRCodeReact from 'qrcode.react'
 
 export function Dashboard() {
   const { address, isConnected } = useAccount()
+  const chainId = useChainId()
   const navigate = useNavigate()
   const [showQRModal, setShowQRModal] = useState(false)
 
-  // Read creator data
+  const isSupportedNetwork = chainId ? isNetworkSupported(chainId) : false
+  const contractAddress = chainId ? getTipChainContractAddress(chainId) : ''
+
   const { data: creatorData } = useReadContract({
-    address: TIPCHAIN_CONTRACT_ADDRESS,
+    address: contractAddress as `0x${string}`,
     abi: TIPCHAIN_ABI,
     functionName: 'getCreator',
     args: address ? [address] : undefined,
     query: {
-      enabled: !!address,
+      enabled: !!address && !!contractAddress && isSupportedNetwork,
     },
   })
 
-  // Read tips received
   const { data: tipsReceived } = useReadContract({
-    address: TIPCHAIN_CONTRACT_ADDRESS,
+    address: contractAddress as `0x${string}`,
     abi: TIPCHAIN_ABI,
     functionName: 'getTipsReceived',
     args: address ? [address] : undefined,
     query: {
-      enabled: !!address,
+      enabled: !!address && !!contractAddress && isSupportedNetwork,
     },
   })
 
-  // Redirect if not connected
   if (!isConnected) {
     return (
       <div className="container py-24">
@@ -62,7 +63,21 @@ export function Dashboard() {
     )
   }
 
-  const isCreator = creatorData?.[6] // isActive field
+  if (!isSupportedNetwork) {
+    return (
+      <div className="container py-24">
+        <div className="max-w-md mx-auto text-center space-y-6">
+          <div className="text-6xl">🌐</div>
+          <h1 className="text-3xl font-bold">Unsupported Network</h1>
+          <p className="text-muted-foreground">
+            Please switch to Celo or Base network
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  const isCreator = creatorData?.[6]
   const creator = creatorData ? {
     basename: creatorData[0],
     displayName: creatorData[1],
@@ -99,7 +114,6 @@ export function Dashboard() {
     }
   }
 
-  // If not a creator, show onboarding
   if (!isCreator) {
     return (
       <div className="container py-24">
@@ -107,7 +121,7 @@ export function Dashboard() {
           <div className="text-6xl">👋</div>
           <h1 className="text-3xl font-bold">Welcome to TipChain!</h1>
           <p className="text-lg text-muted-foreground">
-            You're not registered as a creator yet. Create your profile to start receiving tips!
+            Create your profile to start receiving tips
           </p>
           <Link to="/creators">
             <Button size="lg">
@@ -122,7 +136,6 @@ export function Dashboard() {
   return (
     <div className="container py-12">
       <div className="space-y-8">
-        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold">Dashboard</h1>
@@ -144,7 +157,6 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -192,7 +204,6 @@ export function Dashboard() {
           </Card>
         </div>
 
-        {/* Share Card */}
         <Card className="bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10">
           <CardHeader>
             <CardTitle>Share Your Profile</CardTitle>
@@ -222,19 +233,19 @@ export function Dashboard() {
             <div className="flex gap-2">
               <Button variant="outline" size="sm" className="flex-1">
                 <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                  <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
                 </svg>
                 Twitter
               </Button>
               <Button variant="outline" size="sm" className="flex-1">
                 <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.941z"/>
+                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.941z" />
                 </svg>
                 Telegram
               </Button>
               <Button variant="outline" size="sm" className="flex-1">
                 <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
                 </svg>
                 LinkedIn
               </Button>
@@ -242,7 +253,6 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Recent Tips */}
         <Card>
           <CardHeader>
             <CardTitle>Recent Tips</CardTitle>
@@ -290,7 +300,6 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Analytics (Coming Soon) */}
         <Card>
           <CardHeader>
             <CardTitle>Analytics</CardTitle>
@@ -312,7 +321,6 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Export Data */}
         <Card>
           <CardHeader>
             <CardTitle>Export Data</CardTitle>
@@ -329,7 +337,6 @@ export function Dashboard() {
         </Card>
       </div>
 
-      {/* QR Code Modal */}
       {showQRModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <Card className="w-full max-w-sm relative">

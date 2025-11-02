@@ -1,4 +1,82 @@
-export const TIPCHAIN_CONTRACT_ADDRESS = '0xA1558418153fbfb5799be94f6b238eEC583c8F84' 
+
+export enum SupportedNetworks {
+  CELO = 'celo',
+  CELO_ALFAJORES = 'celo-alfajores',
+  BASE = 'base',
+  BASE_SEPOLIA = 'base-sepolia'
+}
+
+export interface NetworkConfig {
+  chainId: number;
+  name: string;
+  explorerUrl: string;
+  rpcUrl?: string;
+}
+
+export const NETWORK_CONFIGS: Record<SupportedNetworks, NetworkConfig> = {
+  [SupportedNetworks.CELO]: {
+    chainId: 42220,
+    name: 'Celo Mainnet',
+    explorerUrl: 'https://celoscan.io'
+  },
+  [SupportedNetworks.CELO_ALFAJORES]: {
+    chainId: 44787,
+    name: 'Celo Alfajores Testnet',
+    explorerUrl: 'https://alfajores.celoscan.io'
+  },
+  [SupportedNetworks.BASE]: {
+    chainId: 8453,
+    name: 'Base Mainnet',
+    explorerUrl: 'https://basescan.org'
+  },
+  [SupportedNetworks.BASE_SEPOLIA]: {
+    chainId: 84532,
+    name: 'Base Sepolia Testnet',
+    explorerUrl: 'https://sepolia.basescan.org'
+  }
+};
+
+
+export const TIPCHAIN_CONTRACT_ADDRESSES: Record<SupportedNetworks, string> = {
+  [SupportedNetworks.CELO]: '0x1d4c400F9706a3b6fc9fe4246548954C556b7E2f',
+  [SupportedNetworks.CELO_ALFAJORES]: '0x1d4c400F9706a3b6fc9fe4246548954C556b7E2f', 
+  [SupportedNetworks.BASE]: '0xA1558418153fbfb5799be94f6b238eEC583c8F84', 
+  [SupportedNetworks.BASE_SEPOLIA]: '0xA1558418153fbfb5799be94f6b238eEC583c8F84' 
+};
+
+
+export const getTipChainContractAddress = (chainId: number | string): string => {
+  const network = Object.values(SupportedNetworks).find(
+    networkKey => NETWORK_CONFIGS[networkKey].chainId === Number(chainId)
+  );
+
+  if (network && TIPCHAIN_CONTRACT_ADDRESSES[network]) {
+    return TIPCHAIN_CONTRACT_ADDRESSES[network];
+  }
+
+  
+  console.warn(`Rede com chainId ${chainId} não suportada. Usando Celo Mainnet como fallback.`);
+  return TIPCHAIN_CONTRACT_ADDRESSES[SupportedNetworks.CELO];
+};
+
+
+export const isNetworkSupported = (chainId: number | string): boolean => {
+  return Object.values(NETWORK_CONFIGS).some(
+    config => config.chainId === Number(chainId)
+  );
+};
+
+
+export const getNetworkConfig = (chainId: number | string): NetworkConfig | null => {
+  const network = Object.values(SupportedNetworks).find(
+    networkKey => NETWORK_CONFIGS[networkKey].chainId === Number(chainId)
+  );
+
+  return network ? NETWORK_CONFIGS[network] : null;
+};
+
+
+export const TIPCHAIN_CONTRACT_ADDRESS = TIPCHAIN_CONTRACT_ADDRESSES[SupportedNetworks.CELO];
 
 export const TIPCHAIN_ABI = [
   {

@@ -3,10 +3,9 @@ import { Link } from 'react-router-dom'
 import { Search, TrendingUp, Users, Heart } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
-import { useReadContract } from 'wagmi'
-import { TIPCHAIN_CONTRACT_ADDRESS, TIPCHAIN_ABI } from '../config/contracts'
+import { useReadContract, useChainId } from 'wagmi'
+import { TIPCHAIN_ABI, getTipChainContractAddress, isNetworkSupported } from '../config/contracts'
 import { formatEth } from '../lib/utils'
-
 
 const MOCK_CREATORS = [
   {
@@ -15,7 +14,7 @@ const MOCK_CREATORS = [
     displayName: 'Alice the Artist',
     bio: 'Digital artist creating NFTs and onchain art',
     avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alice',
-    totalTipsReceived: '2500000000000000000', // 2.5 ETH
+    totalTipsReceived: '2500000000000000000',
     tipCount: 156,
     category: 'Art',
   },
@@ -25,7 +24,7 @@ const MOCK_CREATORS = [
     displayName: 'Bob the Builder',
     bio: 'Web3 developer building the future',
     avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bob',
-    totalTipsReceived: '1800000000000000000', // 1.8 ETH
+    totalTipsReceived: '1800000000000000000',
     tipCount: 89,
     category: 'Tech',
   },
@@ -35,7 +34,7 @@ const MOCK_CREATORS = [
     displayName: 'Carol the Creator',
     bio: 'Content creator and streamer',
     avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=carol',
-    totalTipsReceived: '3200000000000000000', // 3.2 ETH
+    totalTipsReceived: '3200000000000000000',
     tipCount: 234,
     category: 'Entertainment',
   },
@@ -45,7 +44,7 @@ const MOCK_CREATORS = [
     displayName: 'David the DJ',
     bio: 'Electronic music producer and DJ',
     avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=david',
-    totalTipsReceived: '1500000000000000000', // 1.5 ETH
+    totalTipsReceived: '1500000000000000000',
     tipCount: 67,
     category: 'Music',
   },
@@ -55,7 +54,7 @@ const MOCK_CREATORS = [
     displayName: 'Eve the Educator',
     bio: 'Teaching Web3 and blockchain technology',
     avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=eve',
-    totalTipsReceived: '2100000000000000000', // 2.1 ETH
+    totalTipsReceived: '2100000000000000000',
     tipCount: 145,
     category: 'Education',
   },
@@ -65,7 +64,7 @@ const MOCK_CREATORS = [
     displayName: 'Frank the Photographer',
     bio: 'Capturing moments, sharing stories',
     avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=frank',
-    totalTipsReceived: '900000000000000000', // 0.9 ETH
+    totalTipsReceived: '900000000000000000',
     tipCount: 42,
     category: 'Photography',
   },
@@ -77,29 +76,47 @@ export function Explore() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
 
-  // Read creator count from contract
+  const chainId = useChainId()
+  const isSupportedNetwork = chainId ? isNetworkSupported(chainId) : false
+  const contractAddress = chainId ? getTipChainContractAddress(chainId) : ''
+
   const { data: creatorCount } = useReadContract({
-    address: TIPCHAIN_CONTRACT_ADDRESS,
+    address: contractAddress as `0x${string}`,
     abi: TIPCHAIN_ABI,
     functionName: 'getCreatorCount',
+    query: {
+      enabled: !!contractAddress && isSupportedNetwork,
+    },
   })
 
-  // Filter creators
   const filteredCreators = MOCK_CREATORS.filter((creator) => {
-    const matchesSearch = 
+    const matchesSearch =
       creator.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       creator.basename.toLowerCase().includes(searchQuery.toLowerCase()) ||
       creator.bio.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    const matchesCategory = 
+
+    const matchesCategory =
       selectedCategory === 'All' || creator.category === selectedCategory
 
     return matchesSearch && matchesCategory
   })
 
+  if (!isSupportedNetwork) {
+    return (
+      <div className="container py-24">
+        <div className="max-w-md mx-auto text-center space-y-6">
+          <div className="text-6xl">🌐</div>
+          <h1 className="text-3xl font-bold">Unsupported Network</h1>
+          <p className="text-muted-foreground">
+            Please switch to Celo or Base network to explore creators
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="container py-12">
-      {/* Header */}
       <div className="mb-12 space-y-4">
         <h1 className="text-4xl font-bold tracking-tight">Explore Creators</h1>
         <p className="text-lg text-muted-foreground">
@@ -107,7 +124,6 @@ export function Explore() {
         </p>
       </div>
 
-      {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -149,9 +165,7 @@ export function Explore() {
         </Card>
       </div>
 
-      {/* Search and Filter */}
       <div className="mb-8 space-y-4">
-        {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
@@ -163,7 +177,6 @@ export function Explore() {
           />
         </div>
 
-        {/* Categories */}
         <div className="flex flex-wrap gap-2">
           {CATEGORIES.map((category) => (
             <Button
@@ -178,7 +191,6 @@ export function Explore() {
         </div>
       </div>
 
-      {/* Creators Grid */}
       {filteredCreators.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">No creators found matching your search.</p>
@@ -236,7 +248,6 @@ export function Explore() {
         </div>
       )}
 
-      {/* CTA */}
       <div className="mt-16 text-center space-y-4">
         <h2 className="text-2xl font-bold">Are you a creator?</h2>
         <p className="text-muted-foreground">
