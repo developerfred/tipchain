@@ -7,6 +7,7 @@ import { CreatorProfile } from './pages/CreatorProfile'
 import { Dashboard } from './pages/Dashboard'
 import { BecomeCreator } from './pages/BecomeCreator'
 import { HowItWorks } from './pages/HowItWorks'
+import { InvestorDeck } from './pages/Deck'
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/creators" element={<BecomeCreator />} />
               <Route path="/how-it-works" element={<HowItWorks />} />
+              <Route path="/deck" element={<InvestorDeck />} />
             </Routes>
           </main>
         </div>

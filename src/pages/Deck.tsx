@@ -10,8 +10,7 @@ export function InvestorDeck() {
         {
             title: "TipChain - Venmo for Web3",
             subtitle: "Send crypto tips to your favorite creators",
-            stats: [
-                { label: "Total Tips", value: "2,500+" },
+            stats: [                
                 { label: "Active Creators", value: "150+" },
                 { label: "Chains Supported", value: "5+" }
             ]
