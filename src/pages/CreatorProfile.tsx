@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { Heart, Share2, QrCode, Copy, ExternalLink, TrendingUp } from 'lucide-react'
+import { useState } from 'react'
+import { useParams } from 'react-router-dom'
+import { Heart, Share2, QrCode, Copy, TrendingUp } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { TipModal } from '../components/TipModal'
-import { useReadContract } from 'wagmi'
-import { TIPCHAIN_CONTRACT_ADDRESS, TIPCHAIN_ABI } from '../config/contracts'
+import { useChainId } from 'wagmi'
+import { TIPCHAIN_ABI, getTipChainContractAddress, isNetworkSupported } from '../config/contracts'
 import { formatEth, formatTimeAgo, shortenAddress, generateTipLink, copyToClipboard } from '../lib/utils'
 import toast from 'react-hot-toast'
 import QRCodeReact from 'qrcode.react'
@@ -15,36 +15,38 @@ export function CreatorProfile() {
   const [showTipModal, setShowTipModal] = useState(false)
   const [showQRModal, setShowQRModal] = useState(false)
 
-  // Mock creator data (replace with contract read)
+  const chainId = useChainId()
+  const isSupportedNetwork = chainId ? isNetworkSupported(chainId) : false
+  const contractAddress = chainId ? getTipChainContractAddress(chainId) : ''
+
   const mockCreator = {
     address: address || '0x1234567890123456789012345678901234567890',
     basename: basename || 'alice',
     displayName: 'Alice the Artist',
     bio: 'Digital artist creating NFTs and onchain art. Supporting decentralization one piece at a time.',
     avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${basename || 'alice'}`,
-    totalTipsReceived: '2500000000000000000', // 2.5 ETH
+    totalTipsReceived: '2500000000000000000',
     tipCount: 156,
-    createdAt: 1704067200, // Jan 1, 2024
+    createdAt: 1704067200,
     isActive: true,
   }
 
-  // Mock recent tips
   const recentTips = [
     {
       from: '0xabcd...1234',
-      amount: '100000000000000000', // 0.1 ETH
+      amount: '100000000000000000',
       message: 'Love your work! Keep creating!',
       timestamp: Date.now() / 1000 - 3600,
     },
     {
       from: '0xef12...5678',
-      amount: '50000000000000000', // 0.05 ETH
+      amount: '50000000000000000',
       message: 'Amazing art piece!',
       timestamp: Date.now() / 1000 - 7200,
     },
     {
       from: '0x9876...abcd',
-      amount: '250000000000000000', // 0.25 ETH
+      amount: '250000000000000000',
       message: '',
       timestamp: Date.now() / 1000 - 86400,
     },
@@ -78,21 +80,32 @@ export function CreatorProfile() {
     }
   }
 
+  if (!isSupportedNetwork) {
+    return (
+      <div className="container py-24">
+        <div className="max-w-md mx-auto text-center space-y-6">
+          <div className="text-6xl">🌐</div>
+          <h1 className="text-3xl font-bold">Unsupported Network</h1>
+          <p className="text-muted-foreground">
+            Please switch to Celo or Base network to view creator profiles
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="container py-12">
       <div className="max-w-4xl mx-auto space-y-8">
-        {/* Header */}
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row gap-6">
-              {/* Avatar */}
               <img
                 src={mockCreator.avatarUrl}
                 alt={mockCreator.displayName}
                 className="h-32 w-32 rounded-full border-4 border-primary"
               />
 
-              {/* Info */}
               <div className="flex-1 space-y-3">
                 <div>
                   <h1 className="text-3xl font-bold">{mockCreator.displayName}</h1>
@@ -111,7 +124,6 @@ export function CreatorProfile() {
 
                 <p className="text-muted-foreground">{mockCreator.bio}</p>
 
-                {/* Actions */}
                 <div className="flex flex-wrap gap-2">
                   <Button onClick={() => setShowTipModal(true)} size="lg">
                     <Heart className="mr-2 h-5 w-5" />
@@ -131,7 +143,6 @@ export function CreatorProfile() {
           </CardContent>
         </Card>
 
-        {/* Stats */}
         <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -163,9 +174,9 @@ export function CreatorProfile() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {new Date(mockCreator.createdAt * 1000).toLocaleDateString('en-US', { 
-                  month: 'short', 
-                  year: 'numeric' 
+                {new Date(mockCreator.createdAt * 1000).toLocaleDateString('en-US', {
+                  month: 'short',
+                  year: 'numeric'
                 })}
               </div>
               <p className="text-xs text-muted-foreground">Early adopter</p>
@@ -173,7 +184,6 @@ export function CreatorProfile() {
           </Card>
         </div>
 
-        {/* Recent Tips */}
         <Card>
           <CardHeader>
             <CardTitle>Recent Tips</CardTitle>
@@ -216,7 +226,6 @@ export function CreatorProfile() {
           </CardContent>
         </Card>
 
-        {/* Share Section */}
         <Card className="bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
@@ -250,7 +259,6 @@ export function CreatorProfile() {
         </Card>
       </div>
 
-      {/* Tip Modal */}
       {showTipModal && (
         <TipModal
           creator={mockCreator}
@@ -259,7 +267,6 @@ export function CreatorProfile() {
         />
       )}
 
-      {/* QR Code Modal */}
       {showQRModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <Card className="w-full max-w-sm relative">

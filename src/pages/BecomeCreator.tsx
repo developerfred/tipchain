@@ -1,26 +1,27 @@
 import { useState } from 'react'
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi'
 import { useNavigate } from 'react-router-dom'
 import { Loader2, Check, AlertCircle } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
-import { TIPCHAIN_CONTRACT_ADDRESS, TIPCHAIN_ABI } from '../config/contracts'
+import { TIPCHAIN_ABI, getTipChainContractAddress, isNetworkSupported } from '../config/contracts'
 import { isValidBasename } from '../lib/utils'
 import toast from 'react-hot-toast'
 
 export function BecomeCreator() {
     const { address, isConnected } = useAccount()
+    const chainId = useChainId()
     const navigate = useNavigate()
     const [step, setStep] = useState(1)
 
-    // Form state
     const [basename, setBasename] = useState('')
     const [displayName, setDisplayName] = useState('')
     const [bio, setBio] = useState('')
     const [avatarUrl, setAvatarUrl] = useState('')
-
-    // Validation state
     const [basenameError, setBasenameError] = useState('')
+
+    const isSupportedNetwork = chainId ? isNetworkSupported(chainId) : false
+    const contractAddress = chainId ? getTipChainContractAddress(chainId) : ''
 
     const { writeContract, data: hash, isPending } = useWriteContract()
     const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
@@ -62,6 +63,11 @@ export function BecomeCreator() {
             return
         }
 
+        if (!isSupportedNetwork) {
+            toast.error('Please switch to a supported network (Celo or Base)')
+            return
+        }
+
         if (!validateBasename(basename)) {
             return
         }
@@ -73,7 +79,7 @@ export function BecomeCreator() {
 
         try {
             writeContract({
-                address: TIPCHAIN_CONTRACT_ADDRESS,
+                address: contractAddress as `0x${string}`,
                 abi: TIPCHAIN_ABI,
                 functionName: 'registerCreator',
                 args: [basename, displayName, bio, avatarUrl],
@@ -84,7 +90,6 @@ export function BecomeCreator() {
         }
     }
 
-    // Handle successful registration
     if (isSuccess) {
         setTimeout(() => {
             toast.success('Successfully registered as a creator!')
@@ -107,10 +112,23 @@ export function BecomeCreator() {
         )
     }
 
+    if (!isSupportedNetwork) {
+        return (
+            <div className="container py-24">
+                <div className="max-w-md mx-auto text-center space-y-6">
+                    <div className="text-6xl">🌐</div>
+                    <h1 className="text-3xl font-bold">Unsupported Network</h1>
+                    <p className="text-muted-foreground">
+                        Please switch to Celo or Base network to register as a creator
+                    </p>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="container py-12">
             <div className="max-w-3xl mx-auto space-y-8">
-                {/* Header */}
                 <div className="text-center space-y-4">
                     <h1 className="text-4xl font-bold">Become a Creator</h1>
                     <p className="text-lg text-muted-foreground">
@@ -118,7 +136,6 @@ export function BecomeCreator() {
                     </p>
                 </div>
 
-                {/* Progress Steps */}
                 <div className="flex items-center justify-center space-x-4">
                     <div className={`flex items-center ${step >= 1 ? 'text-primary' : 'text-muted-foreground'}`}>
                         <div className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${step >= 1 ? 'border-primary bg-primary text-white' : 'border-muted'}`}>
@@ -135,7 +152,6 @@ export function BecomeCreator() {
                     </div>
                 </div>
 
-                {/* Form */}
                 <Card>
                     <CardHeader>
                         <CardTitle>
@@ -152,7 +168,6 @@ export function BecomeCreator() {
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {step === 1 ? (
                                 <>
-                                    {/* Basename */}
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium">
                                             Basename <span className="text-red-500">*</span>
@@ -166,7 +181,7 @@ export function BecomeCreator() {
                                                 className={`flex h-10 w-full rounded-md border ${basenameError ? 'border-red-500' : 'border-input'} bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50`}
                                             />
                                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                                                .base.eth
+                                                .tipchain.eth
                                             </span>
                                         </div>
                                         {basenameError && (
@@ -180,7 +195,6 @@ export function BecomeCreator() {
                                         </p>
                                     </div>
 
-                                    {/* Display Name */}
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium">
                                             Display Name <span className="text-red-500">*</span>
@@ -198,11 +212,8 @@ export function BecomeCreator() {
                                         </p>
                                     </div>
 
-                                    {/* Bio */}
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">
-                                            Bio
-                                        </label>
+                                        <label className="text-sm font-medium">Bio</label>
                                         <textarea
                                             value={bio}
                                             onChange={(e) => setBio(e.target.value)}
@@ -216,11 +227,8 @@ export function BecomeCreator() {
                                         </p>
                                     </div>
 
-                                    {/* Avatar URL */}
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">
-                                            Avatar URL (Optional)
-                                        </label>
+                                        <label className="text-sm font-medium">Avatar URL</label>
                                         <input
                                             type="url"
                                             value={avatarUrl}
@@ -229,11 +237,10 @@ export function BecomeCreator() {
                                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                         />
                                         <p className="text-xs text-muted-foreground">
-                                            Link to your profile picture. Leave empty to use a default avatar.
+                                            Link to your profile picture
                                         </p>
                                     </div>
 
-                                    {/* Preview */}
                                     {(basename || displayName) && (
                                         <div className="p-4 border rounded-lg bg-muted/50 space-y-2">
                                             <p className="text-sm font-medium">Preview:</p>
@@ -254,7 +261,7 @@ export function BecomeCreator() {
                                                 )}
                                                 <div>
                                                     <div className="font-semibold">{displayName || 'Your Name'}</div>
-                                                    <div className="text-sm text-muted-foreground">@{basename || 'yourname'}</div>
+                                                    <div className="text-sm text-muted-foreground">@{basename || 'yourname'}.tipchain.eth</div>
                                                 </div>
                                             </div>
                                             {bio && (
@@ -290,7 +297,6 @@ export function BecomeCreator() {
                                 </>
                             ) : (
                                 <>
-                                    {/* Review Step */}
                                     <div className="space-y-4">
                                         <div className="p-4 border rounded-lg space-y-4">
                                             <div className="flex items-center gap-4">
@@ -310,7 +316,7 @@ export function BecomeCreator() {
                                                 )}
                                                 <div className="flex-1">
                                                     <h3 className="text-xl font-bold">{displayName}</h3>
-                                                    <p className="text-muted-foreground">@{basename}.base.eth</p>
+                                                    <p className="text-muted-foreground">@{basename}.tipchain.eth</p>
                                                 </div>
                                             </div>
 
@@ -384,7 +390,6 @@ export function BecomeCreator() {
                     </CardContent>
                 </Card>
 
-                {/* Benefits Section */}
                 <div className="grid gap-6 md:grid-cols-3">
                     <Card>
                         <CardHeader>
