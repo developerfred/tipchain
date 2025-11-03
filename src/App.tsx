@@ -8,11 +8,17 @@ import { Dashboard } from './pages/Dashboard'
 import { BecomeCreator } from './pages/BecomeCreator'
 import { HowItWorks } from './pages/HowItWorks'
 import { InvestorDeck } from './pages/Deck'
+import { Profile } from './pages/Profile'
 
 function App() {
   return (
     <AppProviders>
-      <Router>
+      <Router
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <div className="min-h-screen bg-background flex flex-col">
           <Header />
           <main className="flex-1 w-full">
@@ -25,6 +31,7 @@ function App() {
               <Route path="/creators" element={<BecomeCreator />} />
               <Route path="/how-it-works" element={<HowItWorks />} />
               <Route path="/deck" element={<InvestorDeck />} />
+              <Route path="/profile" element={<Profile />} />  
             </Routes>
           </main>
         </div>

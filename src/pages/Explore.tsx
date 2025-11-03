@@ -1,105 +1,195 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, TrendingUp, Users, Heart } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card'
+import { Search, TrendingUp, Users,Heart, Loader2 } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
-import { useReadContract, useChainId } from 'wagmi'
-import { TIPCHAIN_ABI, getTipChainContractAddress, isNetworkSupported } from '../config/contracts'
+import { CreatorCard } from '../components/CreatorCard'
+import { useChainId } from 'wagmi'
+import { isNetworkSupported, SupportedNetworks, NETWORK_CONFIGS } from '../config/contracts'
 import { formatEth } from '../lib/utils'
+import type { Creator } from '../hooks/useCreators'
+import { createPublicClient, http } from 'viem'
+import { base, baseSepolia, celo, celoAlfajores } from 'viem/chains'
+import { TIPCHAIN_ABI, getTipChainContractAddress } from '../config/contracts'
+import toast from 'react-hot-toast'
 
-const MOCK_CREATORS = [
-  {
-    address: '0x1234...',
-    basename: 'alice',
-    displayName: 'Alice the Artist',
-    bio: 'Digital artist creating NFTs and onchain art',
-    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alice',
-    totalTipsReceived: '2500000000000000000',
-    tipCount: 156,
-    category: 'Art',
+const CHAIN_CONFIGS = {
+  [SupportedNetworks.BASE]: {
+    chain: base,
+    rpc: process.env.VITE_BASE_MAINNET_RPC || 'https://mainnet.base.org'
   },
-  {
-    address: '0x5678...',
-    basename: 'bob',
-    displayName: 'Bob the Builder',
-    bio: 'Web3 developer building the future',
-    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bob',
-    totalTipsReceived: '1800000000000000000',
-    tipCount: 89,
-    category: 'Tech',
+  [SupportedNetworks.BASE_SEPOLIA]: {
+    chain: baseSepolia,
+    rpc: process.env.VITE_BASE_SEPOLIA_RPC || 'https://sepolia.base.org'
   },
-  {
-    address: '0x9abc...',
-    basename: 'carol',
-    displayName: 'Carol the Creator',
-    bio: 'Content creator and streamer',
-    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=carol',
-    totalTipsReceived: '3200000000000000000',
-    tipCount: 234,
-    category: 'Entertainment',
+  [SupportedNetworks.CELO]: {
+    chain: celo,
+    rpc: process.env.VITE_CELO_RPC_URL || 'https://forno.celo.org'
   },
-  {
-    address: '0xdef0...',
-    basename: 'david',
-    displayName: 'David the DJ',
-    bio: 'Electronic music producer and DJ',
-    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=david',
-    totalTipsReceived: '1500000000000000000',
-    tipCount: 67,
-    category: 'Music',
+  [SupportedNetworks.CELO_ALFAJORES]: {
+    chain: celoAlfajores,
+    rpc: process.env.VITE_CELO_ALFAJORES_RPC_URL || 'https://alfajores-forno.celo-testnet.org'
   },
-  {
-    address: '0x1111...',
-    basename: 'eve',
-    displayName: 'Eve the Educator',
-    bio: 'Teaching Web3 and blockchain technology',
-    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=eve',
-    totalTipsReceived: '2100000000000000000',
-    tipCount: 145,
-    category: 'Education',
-  },
-  {
-    address: '0x2222...',
-    basename: 'frank',
-    displayName: 'Frank the Photographer',
-    bio: 'Capturing moments, sharing stories',
-    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=frank',
-    totalTipsReceived: '900000000000000000',
-    tipCount: 42,
-    category: 'Photography',
-  },
+}
+
+
+const ACTIVE_NETWORKS = [
+  SupportedNetworks.CELO,
+  SupportedNetworks.BASE_SEPOLIA,
 ]
 
-const CATEGORIES = ['All', 'Art', 'Tech', 'Entertainment', 'Music', 'Education', 'Photography']
+const NETWORK_FILTERS = ['All', ...ACTIVE_NETWORKS]
 
 export function Explore() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('All')
+  const [selectedNetwork, setSelectedNetwork] = useState<'All' | SupportedNetworks>('All')
+  const [creators, setCreators] = useState<Creator[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   const chainId = useChainId()
   const isSupportedNetwork = chainId ? isNetworkSupported(chainId) : false
-  const contractAddress = chainId ? getTipChainContractAddress(chainId) : ''
 
-  const { data: creatorCount } = useReadContract({
-    address: contractAddress as `0x${string}`,
-    abi: TIPCHAIN_ABI,
-    functionName: 'getCreatorCount',
-    query: {
-      enabled: !!contractAddress && isSupportedNetwork,
-    },
-  })
+  useEffect(() => {
+    const fetchCreators = async () => {
+      setIsLoading(true)
+      try {
+        const allCreators: Creator[] = []
 
-  const filteredCreators = MOCK_CREATORS.filter((creator) => {
-    const matchesSearch =
-      creator.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      creator.basename.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      creator.bio.toLowerCase().includes(searchQuery.toLowerCase())
+        const networksToFetch = selectedNetwork === 'All'
+          ? ACTIVE_NETWORKS
+          : [selectedNetwork as SupportedNetworks]
 
-    const matchesCategory =
-      selectedCategory === 'All' || creator.category === selectedCategory
+        // Fetch from each network with timeout and error handling
+        const results = await Promise.allSettled(
+          networksToFetch.map(async (network) => {
+            try {
+              const config = CHAIN_CONFIGS[network]
+              const contractAddress = getTipChainContractAddress(
+                NETWORK_CONFIGS[network].chainId
+              )
 
-    return matchesSearch && matchesCategory
-  })
+              const client = createPublicClient({
+                chain: config.chain,
+                transport: http(config.rpc, {
+                  timeout: 10000, // 10 second timeout
+                }),
+              })
+
+              // Try to get creator count with error handling
+              let count: bigint
+              try {
+                count = await client.readContract({
+                  address: contractAddress as `0x${string}`,
+                  abi: TIPCHAIN_ABI,
+                  functionName: 'getCreatorCount',
+                }) as bigint
+              } catch (error: any) {
+                // If contract returns 0x or doesn't exist, skip this network
+                if (error.message?.includes('0x') || error.message?.includes('returned no data')) {
+                  console.log(`No contract deployed on ${network}, skipping...`)
+                  return []
+                }
+                throw error
+              }
+
+              if (Number(count) === 0) {
+                console.log(`No creators on ${network} yet`)
+                return []
+              }
+
+              const addresses = await client.readContract({
+                address: contractAddress as `0x${string}`,
+                abi: TIPCHAIN_ABI,
+                functionName: 'getTopCreators',
+                args: [count],
+              }) as string[]
+
+              const creatorsData = await Promise.all(
+                addresses.map(async (address) => {
+                  try {
+                    const data = await client.readContract({
+                      address: contractAddress as `0x${string}`,
+                      abi: TIPCHAIN_ABI,
+                      functionName: 'getCreator',
+                      args: [address],
+                    }) as any
+
+                    if (data && data[6]) { // isActive
+                      return {
+                        address,
+                        basename: data[0],
+                        displayName: data[1],
+                        bio: data[2],
+                        avatarUrl: data[3],
+                        totalTipsReceived: data[4],
+                        tipCount: data[5],
+                        isActive: data[6],
+                        createdAt: data[7],
+                        network,
+                        chainId: NETWORK_CONFIGS[network].chainId,
+                      } as Creator
+                    }
+                    return null
+                  } catch (error) {
+                    console.error(`Error fetching creator ${address}:`, error)
+                    return null
+                  }
+                })
+              )
+
+              return creatorsData.filter((c): c is Creator => c !== null)
+            } catch (error: any) {
+              console.error(`Error fetching from ${network}:`, error.message)
+              return []
+            }
+          })
+        )
+
+        // Process results, ignoring failed networks
+        results.forEach((result) => {
+          if (result.status === 'fulfilled') {
+            allCreators.push(...result.value)
+          }
+        })
+
+        setCreators(allCreators)
+      } catch (error) {
+        console.error('Error fetching creators:', error)
+        toast.error('Failed to load creators. Please try again.')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchCreators()
+  }, [selectedNetwork])
+
+  const filteredCreators = useMemo(() => {
+    return creators.filter((creator) => {
+      const matchesSearch =
+        creator.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        creator.basename.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        creator.bio.toLowerCase().includes(searchQuery.toLowerCase())
+
+      return matchesSearch
+    })
+  }, [creators, searchQuery])
+
+  const stats = useMemo(() => {
+    const totalTips = filteredCreators.reduce((sum, c) => sum + Number(c.tipCount), 0)
+    const totalVolume = filteredCreators.reduce((sum, c) => sum + c.totalTipsReceived, BigInt(0))
+
+    return {
+      totalCreators: filteredCreators.length,
+      totalTips,
+      totalVolume,
+    }
+  }, [filteredCreators])
+
+  const getNetworkLabel = (network: 'All' | SupportedNetworks): string => {
+    if (network === 'All') return 'All Networks'
+    return NETWORK_CONFIGS[network].name
+  }
 
   if (!isSupportedNetwork) {
     return (
@@ -120,10 +210,11 @@ export function Explore() {
       <div className="mb-12 space-y-4">
         <h1 className="text-4xl font-bold tracking-tight">Explore Creators</h1>
         <p className="text-lg text-muted-foreground">
-          Discover and support amazing creators building onchain
+          Discover and support amazing creators building onchain across all networks
         </p>
       </div>
 
+      {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -131,8 +222,8 @@ export function Explore() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{MOCK_CREATORS.length}</div>
-            <p className="text-xs text-muted-foreground">+12% from last month</p>
+            <div className="text-2xl font-bold">{stats.totalCreators}</div>
+            <p className="text-xs text-muted-foreground">Across all networks</p>
           </CardContent>
         </Card>
 
@@ -142,10 +233,8 @@ export function Explore() {
             <Heart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {MOCK_CREATORS.reduce((sum, c) => sum + c.tipCount, 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">Across all creators</p>
+            <div className="text-2xl font-bold">{stats.totalTips}</div>
+            <p className="text-xs text-muted-foreground">Total transactions</p>
           </CardContent>
         </Card>
 
@@ -156,15 +245,14 @@ export function Explore() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatEth(
-                MOCK_CREATORS.reduce((sum, c) => sum + BigInt(c.totalTipsReceived), BigInt(0))
-              )} ETH
+              {formatEth(stats.totalVolume, 2)} ETH
             </div>
             <p className="text-xs text-muted-foreground">Total tipped</p>
           </CardContent>
         </Card>
       </div>
 
+      {/* Search and Filters */}
       <div className="mb-8 space-y-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -178,76 +266,53 @@ export function Explore() {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map((category) => (
+          {NETWORK_FILTERS.map((network) => (
             <Button
-              key={category}
-              variant={selectedCategory === category ? 'default' : 'outline'}
+              key={network}
+              variant={selectedNetwork === network ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setSelectedCategory(category)}
+              onClick={() => setSelectedNetwork(network as typeof selectedNetwork)}
             >
-              {category}
+              {getNetworkLabel(network as typeof selectedNetwork)}
             </Button>
           ))}
         </div>
       </div>
 
-      {filteredCreators.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">No creators found matching your search.</p>
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-3 text-muted-foreground">Loading creators from all networks...</span>
         </div>
-      ) : (
+      )}
+
+      {/* Empty State */}
+      {!isLoading && filteredCreators.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">
+            {searchQuery
+              ? 'No creators found matching your search.'
+              : 'No creators registered yet. Be the first!'}
+          </p>
+          {!searchQuery && (
+            <Link to="/creators" className="mt-4 inline-block">
+              <Button>Become a Creator</Button>
+            </Link>
+          )}
+        </div>
+      )}
+
+      {/* Creators Grid */}
+      {!isLoading && filteredCreators.length > 0 && (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredCreators.map((creator) => (
-            <Card key={creator.address} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-3">
-                    <img
-                      src={creator.avatarUrl}
-                      alt={creator.displayName}
-                      className="h-12 w-12 rounded-full"
-                    />
-                    <div>
-                      <CardTitle className="text-lg">{creator.displayName}</CardTitle>
-                      <CardDescription>@{creator.basename}</CardDescription>
-                    </div>
-                  </div>
-                  <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
-                    {creator.category}
-                  </span>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {creator.bio}
-                </p>
-
-                <div className="flex items-center justify-between text-sm">
-                  <div>
-                    <div className="font-semibold">
-                      {formatEth(BigInt(creator.totalTipsReceived), 2)} ETH
-                    </div>
-                    <div className="text-xs text-muted-foreground">Total received</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold">{creator.tipCount}</div>
-                    <div className="text-xs text-muted-foreground">Tips</div>
-                  </div>
-                </div>
-
-                <Link to={`/tip/${creator.basename}`} className="block">
-                  <Button className="w-full" size="sm">
-                    <Heart className="mr-2 h-4 w-4" />
-                    Tip Creator
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+            <CreatorCard key={`${creator.chainId}-${creator.address}`} creator={creator} />
           ))}
         </div>
       )}
 
+      {/* CTA Section */}
       <div className="mt-16 text-center space-y-4">
         <h2 className="text-2xl font-bold">Are you a creator?</h2>
         <p className="text-muted-foreground">

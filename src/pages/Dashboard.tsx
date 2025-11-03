@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAccount, useReadContract, useChainId } from 'wagmi'
+import { useAccount, useChainId } from 'wagmi'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Heart,
@@ -8,13 +8,16 @@ import {
   Copy,
   ExternalLink,
   Settings,
-  Download,
   Share2,
-  QrCode
+  QrCode,
+  Loader2,
+  AlertCircle
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
-import { TIPCHAIN_ABI, getTipChainContractAddress, isNetworkSupported, getNetworkConfig } from '../config/contracts'
+import { NetworkBadge } from '../components/NetworkBadge'
+import { isNetworkSupported } from '../config/contracts'
+import { useCreator, useTipsReceived } from '../hooks/useCreators'
 import { formatEth, formatTimeAgo, shortenAddress, generateTipLink, copyToClipboard } from '../lib/utils'
 import toast from 'react-hot-toast'
 import QRCodeReact from 'qrcode.react'
@@ -26,27 +29,9 @@ export function Dashboard() {
   const [showQRModal, setShowQRModal] = useState(false)
 
   const isSupportedNetwork = chainId ? isNetworkSupported(chainId) : false
-  const contractAddress = chainId ? getTipChainContractAddress(chainId) : ''
 
-  const { data: creatorData } = useReadContract({
-    address: contractAddress as `0x${string}`,
-    abi: TIPCHAIN_ABI,
-    functionName: 'getCreator',
-    args: address ? [address] : undefined,
-    query: {
-      enabled: !!address && !!contractAddress && isSupportedNetwork,
-    },
-  })
-
-  const { data: tipsReceived } = useReadContract({
-    address: contractAddress as `0x${string}`,
-    abi: TIPCHAIN_ABI,
-    functionName: 'getTipsReceived',
-    args: address ? [address] : undefined,
-    query: {
-      enabled: !!address && !!contractAddress && isSupportedNetwork,
-    },
-  })
+  const { creator, isLoading: isLoadingCreator } = useCreator(address)
+  const { tips: tipsReceived, isLoading: isLoadingTips } = useTipsReceived(address)
 
   if (!isConnected) {
     return (
@@ -72,24 +57,51 @@ export function Dashboard() {
           <p className="text-muted-foreground">
             Please switch to Celo or Base network
           </p>
+          {chainId && (
+            <div className="pt-4">
+              <NetworkBadge chainId={chainId} size="lg" showFullName />
+            </div>
+          )}
         </div>
       </div>
     )
   }
 
-  const isCreator = creatorData?.[6]
-  const creator = creatorData ? {
-    basename: creatorData[0],
-    displayName: creatorData[1],
-    bio: creatorData[2],
-    avatarUrl: creatorData[3],
-    totalTipsReceived: creatorData[4],
-    tipCount: creatorData[5],
-    isActive: creatorData[6],
-    createdAt: creatorData[7],
-  } : null
+  if (isLoadingCreator) {
+    return (
+      <div className="container py-24">
+        <div className="max-w-md mx-auto text-center space-y-6">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
+          <p className="text-muted-foreground">Loading your profile...</p>
+        </div>
+      </div>
+    )
+  }
 
-  const tipLink = creator ? generateTipLink(creator.basename) : ''
+  const isCreator = creator?.isActive
+
+  if (!isCreator) {
+    return (
+      <div className="container py-24">
+        <div className="max-w-2xl mx-auto text-center space-y-6">
+          <div className="text-6xl">👋</div>
+          <h1 className="text-3xl font-bold">Welcome to TipChain!</h1>
+          <p className="text-lg text-muted-foreground">
+            Create your profile to start receiving tips
+          </p>
+          <div className="pt-4">
+            <Link to="/creators">
+              <Button size="lg">
+                Become a Creator
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const tipLink = generateTipLink(creator.basename)
 
   const handleCopyLink = async () => {
     const copied = await copyToClipboard(tipLink)
@@ -102,7 +114,7 @@ export function Dashboard() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Tip ${creator?.displayName}`,
+          title: `Tip ${creator.displayName}`,
           text: `Support me on TipChain!`,
           url: tipLink,
         })
@@ -112,25 +124,6 @@ export function Dashboard() {
     } else {
       handleCopyLink()
     }
-  }
-
-  if (!isCreator) {
-    return (
-      <div className="container py-24">
-        <div className="max-w-2xl mx-auto text-center space-y-6">
-          <div className="text-6xl">👋</div>
-          <h1 className="text-3xl font-bold">Welcome to TipChain!</h1>
-          <p className="text-lg text-muted-foreground">
-            Create your profile to start receiving tips
-          </p>
-          <Link to="/creators">
-            <Button size="lg">
-              Become a Creator
-            </Button>
-          </Link>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -144,19 +137,16 @@ export function Dashboard() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Link to={`/profile/${address}`}>
+            <Link to={`/tip/${creator.basename}`}>
               <Button variant="outline">
                 <ExternalLink className="mr-2 h-4 w-4" />
                 View Public Profile
               </Button>
             </Link>
-            <Button variant="outline" onClick={() => navigate('/profile/edit')}>
-              <Settings className="mr-2 h-4 w-4" />
-              Edit Profile
-            </Button>
           </div>
         </div>
 
+        {/* Stats */}
         <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -165,10 +155,10 @@ export function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {formatEth(creator?.totalTipsReceived || BigInt(0), 3)} ETH
+                {formatEth(creator.totalTipsReceived, 3)} ETH
               </div>
               <p className="text-xs text-muted-foreground">
-                ≈ ${(Number(formatEth(creator?.totalTipsReceived || BigInt(0))) * 1700).toFixed(2)} USD
+                ≈ ${(Number(formatEth(creator.totalTipsReceived)) * 1700).toFixed(2)} USD
               </p>
             </CardContent>
           </Card>
@@ -179,7 +169,7 @@ export function Dashboard() {
               <Heart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{Number(creator?.tipCount || 0)}</div>
+              <div className="text-2xl font-bold">{Number(creator.tipCount)}</div>
               <p className="text-xs text-muted-foreground">
                 From supporters
               </p>
@@ -193,7 +183,7 @@ export function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {creator?.tipCount && Number(creator.tipCount) > 0
+                {creator.tipCount && Number(creator.tipCount) > 0
                   ? formatEth(creator.totalTipsReceived / creator.tipCount, 3)
                   : '0.00'} ETH
               </div>
@@ -204,6 +194,37 @@ export function Dashboard() {
           </Card>
         </div>
 
+        {/* Profile Info */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Profile</CardTitle>
+            <CardDescription>
+              Your creator information on {chainId && <NetworkBadge chainId={chainId} size="sm" />}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-4">
+              <img
+                src={creator.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${creator.basename}`}
+                alt={creator.displayName}
+                className="h-16 w-16 rounded-full"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${creator.basename}`
+                }}
+              />
+              <div className="flex-1">
+                <h3 className="text-xl font-bold">{creator.displayName}</h3>
+                <p className="text-sm text-muted-foreground">@{creator.basename}</p>
+                <p className="text-xs text-muted-foreground">{shortenAddress(address!)}</p>
+              </div>
+            </div>
+            {creator.bio && (
+              <p className="text-sm text-muted-foreground">{creator.bio}</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Share Profile */}
         <Card className="bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10">
           <CardHeader>
             <CardTitle>Share Your Profile</CardTitle>
@@ -253,6 +274,7 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
+        {/* Recent Tips */}
         <Card>
           <CardHeader>
             <CardTitle>Recent Tips</CardTitle>
@@ -261,7 +283,11 @@ export function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {!tipsReceived || tipsReceived.length === 0 ? (
+            {isLoadingTips ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : !tipsReceived || tipsReceived.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <Heart className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No tips received yet</p>
@@ -277,19 +303,19 @@ export function Dashboard() {
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">
-                          {shortenAddress(tip.from)}
+                          {shortenAddress(tip.from || tip[0])}
                         </span>
                         <span className="text-sm text-muted-foreground">
-                          tipped {formatEth(tip.amount, 3)} ETH
+                          tipped {formatEth(tip.amount || tip[2], 3)} ETH
                         </span>
                       </div>
-                      {tip.message && (
+                      {(tip.message || tip[4]) && (
                         <p className="text-sm text-muted-foreground italic">
-                          "{tip.message}"
+                          "{tip.message || tip[4]}"
                         </p>
                       )}
                       <p className="text-xs text-muted-foreground">
-                        {formatTimeAgo(Number(tip.timestamp))}
+                        {formatTimeAgo(Number(tip.timestamp || tip[5]))}
                       </p>
                     </div>
                     <Heart className="h-5 w-5 text-red-500 fill-red-500 flex-shrink-0" />
@@ -299,44 +325,9 @@ export function Dashboard() {
             )}
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Analytics</CardTitle>
-            <CardDescription>
-              Detailed insights coming soon
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="p-4 border rounded-lg">
-                <div className="text-sm font-medium text-muted-foreground">Top Supporter</div>
-                <div className="text-2xl font-bold mt-2">Coming Soon</div>
-              </div>
-              <div className="p-4 border rounded-lg">
-                <div className="text-sm font-medium text-muted-foreground">Monthly Growth</div>
-                <div className="text-2xl font-bold mt-2">Coming Soon</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Export Data</CardTitle>
-            <CardDescription>
-              Download your tips data for accounting
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" disabled>
-              <Download className="mr-2 h-4 w-4" />
-              Export as CSV (Coming Soon)
-            </Button>
-          </CardContent>
-        </Card>
       </div>
 
+      {/* QR Modal */}
       {showQRModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <Card className="w-full max-w-sm relative">
@@ -349,7 +340,7 @@ export function Dashboard() {
             <CardHeader>
               <CardTitle className="text-center">Your QR Code</CardTitle>
               <CardDescription className="text-center">
-                Scan to tip @{creator?.basename}
+                Scan to tip @{creator.basename}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center space-y-4">
