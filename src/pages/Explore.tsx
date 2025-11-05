@@ -1,195 +1,114 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, TrendingUp, Users,Heart, Loader2 } from 'lucide-react'
+import {
+  Search,
+  TrendingUp,
+  Users,
+  Heart,
+  Loader2,
+  Filter,
+  ArrowUpDown,
+  Calendar
+} from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { CreatorCard } from '../components/CreatorCard'
-import { useChainId } from 'wagmi'
-import { isNetworkSupported, SupportedNetworks, NETWORK_CONFIGS } from '../config/contracts'
+import { useExplore, type SortBy } from '../hooks/useExplore'
 import { formatEth } from '../lib/utils'
-import type { Creator } from '../hooks/useCreators'
-import { createPublicClient, http } from 'viem'
-import { base, baseSepolia, celo, celoAlfajores } from 'viem/chains'
-import { TIPCHAIN_ABI, getTipChainContractAddress } from '../config/contracts'
+import { useChainId } from 'wagmi'
+import { isNetworkSupported } from '../config/contracts'
 import toast from 'react-hot-toast'
 
-const CHAIN_CONFIGS = {
-  [SupportedNetworks.BASE]: {
-    chain: base,
-    rpc: process.env.VITE_BASE_MAINNET_RPC || 'https://mainnet.base.org'
-  },
-  [SupportedNetworks.BASE_SEPOLIA]: {
-    chain: baseSepolia,
-    rpc: process.env.VITE_BASE_SEPOLIA_RPC || 'https://sepolia.base.org'
-  },
-  [SupportedNetworks.CELO]: {
-    chain: celo,
-    rpc: process.env.VITE_CELO_RPC_URL || 'https://forno.celo.org'
-  },
-  [SupportedNetworks.CELO_ALFAJORES]: {
-    chain: celoAlfajores,
-    rpc: process.env.VITE_CELO_ALFAJORES_RPC_URL || 'https://alfajores-forno.celo-testnet.org'
-  },
-}
-
-
-const ACTIVE_NETWORKS = [
-  SupportedNetworks.CELO,
-  SupportedNetworks.BASE_SEPOLIA,
+const SORT_OPTIONS = [
+  { value: 'totalAmountReceived' as SortBy, label: 'Total Received', icon: TrendingUp },
+  { value: 'tipCount' as SortBy, label: 'Tips Count', icon: Heart },
+  { value: 'registeredAt' as SortBy, label: 'Newest', icon: Calendar },
+  { value: 'displayName' as SortBy, label: 'Name', icon: Users },
 ]
 
-const NETWORK_FILTERS = ['All', ...ACTIVE_NETWORKS]
-
 export function Explore() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedNetwork, setSelectedNetwork] = useState<'All' | SupportedNetworks>('All')
-  const [creators, setCreators] = useState<Creator[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-
   const chainId = useChainId()
   const isSupportedNetwork = chainId ? isNetworkSupported(chainId) : false
 
+  const [sortBy, setSortBy] = useState<SortBy>('totalAmountReceived')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [localSearch, setLocalSearch] = useState('')
+  const [showFilters, setShowFilters] = useState(false)
+
+  const {
+    creators,
+    platformStats,
+    isLoading,
+    error,
+    searchQuery,
+    totalCount,
+    hasMore,
+    searchCreators,
+    loadCreators,
+    loadMore,
+  } = useExplore({
+    limit: 50,
+    sortBy,
+    sortOrder,
+    onlyActive: true
+  })
+
+  // Debounced search
   useEffect(() => {
-    const fetchCreators = async () => {
-      setIsLoading(true)
-      try {
-        const allCreators: Creator[] = []
+    const timeoutId = setTimeout(() => {
+      if (localSearch !== searchQuery) {
+        if (localSearch.trim()) {
+          searchCreators(localSearch)
+        } else {
+          loadCreators()
+        }
+      }
+    }, 500)
 
-        const networksToFetch = selectedNetwork === 'All'
-          ? ACTIVE_NETWORKS
-          : [selectedNetwork as SupportedNetworks]
+    return () => clearTimeout(timeoutId)
+  }, [localSearch])
 
-        // Fetch from each network with timeout and error handling
-        const results = await Promise.allSettled(
-          networksToFetch.map(async (network) => {
-            try {
-              const config = CHAIN_CONFIGS[network]
-              const contractAddress = getTipChainContractAddress(
-                NETWORK_CONFIGS[network].chainId
-              )
+  // Handle errors
+  useEffect(() => {
+    if (error) {
+      toast.error(error)
+    }
+  }, [error])
 
-              const client = createPublicClient({
-                chain: config.chain,
-                transport: http(config.rpc, {
-                  timeout: 10000, // 10 second timeout
-                }),
-              })
+  const handleSearch = (query: string) => {
+    setLocalSearch(query)
+  }
 
-              // Try to get creator count with error handling
-              let count: bigint
-              try {
-                count = await client.readContract({
-                  address: contractAddress as `0x${string}`,
-                  abi: TIPCHAIN_ABI,
-                  functionName: 'getCreatorCount',
-                }) as bigint
-              } catch (error: any) {
-                // If contract returns 0x or doesn't exist, skip this network
-                if (error.message?.includes('0x') || error.message?.includes('returned no data')) {
-                  console.log(`No contract deployed on ${network}, skipping...`)
-                  return []
-                }
-                throw error
-              }
+  const handleSortChange = (newSortBy: SortBy) => {
+    setSortBy(newSortBy)
+  }
 
-              if (Number(count) === 0) {
-                console.log(`No creators on ${network} yet`)
-                return []
-              }
+  const handleSortOrderToggle = () => {
+    setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')
+  }
 
-              const addresses = await client.readContract({
-                address: contractAddress as `0x${string}`,
-                abi: TIPCHAIN_ABI,
-                functionName: 'getTopCreators',
-                args: [count],
-              }) as string[]
-
-              const creatorsData = await Promise.all(
-                addresses.map(async (address) => {
-                  try {
-                    const data = await client.readContract({
-                      address: contractAddress as `0x${string}`,
-                      abi: TIPCHAIN_ABI,
-                      functionName: 'getCreator',
-                      args: [address],
-                    }) as any
-
-                    if (data && data[6]) { // isActive
-                      return {
-                        address,
-                        basename: data[0],
-                        displayName: data[1],
-                        bio: data[2],
-                        avatarUrl: data[3],
-                        totalTipsReceived: data[4],
-                        tipCount: data[5],
-                        isActive: data[6],
-                        createdAt: data[7],
-                        network,
-                        chainId: NETWORK_CONFIGS[network].chainId,
-                      } as Creator
-                    }
-                    return null
-                  } catch (error) {
-                    console.error(`Error fetching creator ${address}:`, error)
-                    return null
-                  }
-                })
-              )
-
-              return creatorsData.filter((c): c is Creator => c !== null)
-            } catch (error: any) {
-              console.error(`Error fetching from ${network}:`, error.message)
-              return []
-            }
-          })
-        )
-
-        // Process results, ignoring failed networks
-        results.forEach((result) => {
-          if (result.status === 'fulfilled') {
-            allCreators.push(...result.value)
-          }
-        })
-
-        setCreators(allCreators)
-      } catch (error) {
-        console.error('Error fetching creators:', error)
-        toast.error('Failed to load creators. Please try again.')
-      } finally {
-        setIsLoading(false)
+  const stats = useMemo(() => {
+    if (platformStats) {
+      return {
+        totalCreators: platformStats.totalCreators,
+        totalTips: platformStats.totalTips,
+        totalVolume: platformStats.totalVolume,
       }
     }
 
-    fetchCreators()
-  }, [selectedNetwork])
-
-  const filteredCreators = useMemo(() => {
-    return creators.filter((creator) => {
-      const matchesSearch =
-        creator.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        creator.basename.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        creator.bio.toLowerCase().includes(searchQuery.toLowerCase())
-
-      return matchesSearch
-    })
-  }, [creators, searchQuery])
-
-  const stats = useMemo(() => {
-    const totalTips = filteredCreators.reduce((sum, c) => sum + Number(c.tipCount), 0)
-    const totalVolume = filteredCreators.reduce((sum, c) => sum + c.totalTipsReceived, BigInt(0))
+    // Fallback to calculated stats from current creators
+    const totalTips = creators.reduce((sum, c) => sum + (c.tipCount || 0), 0)
+    const totalVolume = creators.reduce((sum, c) => {
+      const amount = c.totalAmountReceived ? BigInt(c.totalAmountReceived) : BigInt(0)
+      return sum + amount
+    }, BigInt(0))
 
     return {
-      totalCreators: filteredCreators.length,
+      totalCreators: totalCount,
       totalTips,
       totalVolume,
     }
-  }, [filteredCreators])
-
-  const getNetworkLabel = (network: 'All' | SupportedNetworks): string => {
-    if (network === 'All') return 'All Networks'
-    return NETWORK_CONFIGS[network].name
-  }
+  }, [platformStats, creators, totalCount])
 
   if (!isSupportedNetwork) {
     return (
@@ -198,7 +117,7 @@ export function Explore() {
           <div className="text-6xl">🌐</div>
           <h1 className="text-3xl font-bold">Unsupported Network</h1>
           <p className="text-muted-foreground">
-            Please switch to Celo or Base network to explore creators
+            Please switch to a supported network to explore creators
           </p>
         </div>
       </div>
@@ -206,11 +125,12 @@ export function Explore() {
   }
 
   return (
-    <div className="container py-12">
-      <div className="mb-12 space-y-4">
+    <div className="container py-8">
+      {/* Header */}
+      <div className="mb-8 space-y-4">
         <h1 className="text-4xl font-bold tracking-tight">Explore Creators</h1>
         <p className="text-lg text-muted-foreground">
-          Discover and support amazing creators building onchain across all networks
+          Discover and support amazing creators across the decentralized web
         </p>
       </div>
 
@@ -223,104 +143,220 @@ export function Explore() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalCreators}</div>
-            <p className="text-xs text-muted-foreground">Across all networks</p>
+            <p className="text-xs text-muted-foreground">Registered creators</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Tips Sent</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Tips</CardTitle>
             <Heart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalTips}</div>
-            <p className="text-xs text-muted-foreground">Total transactions</p>
+            <p className="text-xs text-muted-foreground">Tips sent</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Volume</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {formatEth(stats.totalVolume, 2)} ETH
             </div>
-            <p className="text-xs text-muted-foreground">Total tipped</p>
+            <p className="text-xs text-muted-foreground">Total value tipped</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Search and Filters */}
       <div className="mb-8 space-y-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search creators by name or username..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          />
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search creators by name, username, or bio..."
+              value={localSearch}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+            {isLoading && (
+              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+            )}
+          </div>
+
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => setShowFilters(!showFilters)}
+            className="shrink-0"
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            Filters
+          </Button>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {NETWORK_FILTERS.map((network) => (
-            <Button
-              key={network}
-              variant={selectedNetwork === network ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSelectedNetwork(network as typeof selectedNetwork)}
-            >
-              {getNetworkLabel(network as typeof selectedNetwork)}
-            </Button>
-          ))}
-        </div>
+        {/* Advanced Filters */}
+        {showFilters && (
+          <div className="p-4 border rounded-lg space-y-4 bg-muted/50">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Sort by:</span>
+                <div className="flex gap-1">
+                  {SORT_OPTIONS.map((option) => {
+                    const Icon = option.icon
+                    return (
+                      <Button
+                        key={option.value}
+                        variant={sortBy === option.value ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleSortChange(option.value)}
+                      >
+                        <Icon className="h-3 w-3 mr-1" />
+                        {option.label}
+                      </Button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSortOrderToggle}
+              >
+                <ArrowUpDown className="h-3 w-3 mr-1" />
+                {sortOrder === 'desc' ? 'Descending' : 'Ascending'}
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSortBy('totalAmountReceived')
+                  setSortOrder('desc')
+                  setLocalSearch('')
+                }}
+              >
+                Reset Filters
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Results Info */}
+        {!isLoading && (
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              Showing {creators.length} of {totalCount} creators
+              {searchQuery && (
+                <span> for "<strong>{searchQuery}</strong>"</span>
+              )}
+            </div>
+
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setLocalSearch('')
+                }}
+              >
+                Clear search
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Loading State */}
-      {isLoading && (
+      {isLoading && creators.length === 0 && (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-3 text-muted-foreground">Loading creators from all networks...</span>
+          <span className="ml-3 text-muted-foreground">Loading creators...</span>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && !isLoading && (
+        <div className="text-center py-12 space-y-4">
+          <div className="text-6xl">⚠️</div>
+          <h3 className="text-xl font-semibold">Something went wrong</h3>
+          <p className="text-muted-foreground">{error}</p>
+          <Button onClick={() => window.location.reload()}>
+            Try Again
+          </Button>
         </div>
       )}
 
       {/* Empty State */}
-      {!isLoading && filteredCreators.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">
+      {!isLoading && creators.length === 0 && !error && (
+        <div className="text-center py-12 space-y-4">
+          <div className="text-6xl">🔍</div>
+          <h3 className="text-xl font-semibold">
+            {searchQuery ? 'No creators found' : 'No creators yet'}
+          </h3>
+          <p className="text-muted-foreground max-w-md mx-auto">
             {searchQuery
-              ? 'No creators found matching your search.'
-              : 'No creators registered yet. Be the first!'}
+              ? `No creators found matching "${searchQuery}". Try a different search term.`
+              : 'Be the first creator to join the platform and start receiving tips from your supporters!'}
           </p>
           {!searchQuery && (
-            <Link to="/creators" className="mt-4 inline-block">
-              <Button>Become a Creator</Button>
+            <Link to="/creators" className="inline-block mt-4">
+              <Button size="lg">Become a Creator</Button>
             </Link>
           )}
         </div>
       )}
 
       {/* Creators Grid */}
-      {!isLoading && filteredCreators.length > 0 && (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredCreators.map((creator) => (
-            <CreatorCard key={`${creator.chainId}-${creator.address}`} creator={creator} />
-          ))}
-        </div>
+      {!isLoading && creators.length > 0 && (
+        <>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {creators.map((creator) => (
+              <CreatorCard
+                key={creator.id}
+                creator={creator}
+              />
+            ))}
+          </div>
+
+          {/* Load More */}
+          {hasMore && (
+            <div className="text-center mt-8">
+              <Button
+                onClick={loadMore}
+                disabled={isLoading}
+                variant="outline"
+                size="lg"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Loading...
+                  </>
+                ) : (
+                  'Load More Creators'
+                )}
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
       {/* CTA Section */}
       <div className="mt-16 text-center space-y-4">
         <h2 className="text-2xl font-bold">Are you a creator?</h2>
-        <p className="text-muted-foreground">
-          Join TipChain and start receiving tips from your supporters
+        <p className="text-muted-foreground max-w-md mx-auto">
+          Join our platform and start receiving tips directly from your supporters in a decentralized way.
         </p>
         <Link to="/creators">
-          <Button size="lg">
-            Get Started
+          <Button size="lg" variant="outline">
+            Get Started as Creator
           </Button>
         </Link>
       </div>
