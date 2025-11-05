@@ -102,9 +102,9 @@ export function InvestorDeck() {
                 { role: "Advisors", experience: "Base ecosystem experts & creator economy specialists" }
             ],
             roadmap: [
-                "Q1 2024: Launch MVP & onboard first 50 creators",
-                "Q2 2024: Farcaster integration & referral program",
-                "Q3 2024: Multi-chain expansion & mobile app"
+                "Q3 2025: Launch MVP & onboard first 50 creators",
+                "Q3 2025: Farcaster integration & referral program",
+                "Q1 2026: Multi-chain expansion & mobile app"
             ]
         }
     ]

@@ -16,7 +16,9 @@ export function CreatorCard({ creator }: CreatorCardProps) {
 
     const avatarUrl = creator.avatarUrl || generateAvatarUrl(creator.address)
 
-    const handleTipClick = () => {
+    const handleTipClick = (e: React.MouseEvent) => {
+        e.preventDefault() // Prevenir navegação quando clicar no botão de tip
+        e.stopPropagation() // Evitar que o evento propague para o Link
         setShowTipModal(true)
     }
 
@@ -26,63 +28,68 @@ export function CreatorCard({ creator }: CreatorCardProps) {
 
     return (
         <>
-            <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-                <CardContent className="p-0">
-                    {/* Avatar Section */}
-                    <div className="relative h-32 bg-gradient-to-br from-celo-yellow to-celo-green">
-                        <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
-                            <img
-                                src={avatarUrl}
-                                alt={creator.displayName}
-                                className="w-16 h-16 rounded-full border-4 border-white bg-white"
-                            />
+            <Card className="overflow-hidden hover:shadow-lg transition-shadow group cursor-pointer">
+                <Link to={`/${creator.basename}`} className="block">
+                    <CardContent className="p-0">
+                        {/* Avatar Section */}
+                        <div className="relative h-32 bg-gradient-to-br from-celo-yellow to-celo-green">
+                            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
+                                <img
+                                    src={avatarUrl}
+                                    alt={creator.displayName}
+                                    className="w-16 h-16 rounded-full border-4 border-white bg-white group-hover:scale-105 transition-transform"
+                                />
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Content */}
-                    <div className="pt-10 px-6 pb-6 text-center">
-                        <Link to={`/${creator.basename}`}>
-                            <h3 className="text-lg font-semibold hover:text-celo-yellow transition-colors">
+                        {/* Content */}
+                        <div className="pt-10 px-6 pb-6 text-center">
+                            <h3 className="text-lg font-semibold group-hover:text-celo-yellow transition-colors">
                                 {creator.displayName}
                             </h3>
-                        </Link>
-                        <p className="text-sm text-gray-600 mb-4">@{creator.basename}</p>
+                            <p className="text-sm text-gray-600 mb-4">@{creator.basename}</p>
 
-                        {creator.bio && (
-                            <p className="text-sm text-gray-700 mb-4 line-clamp-2">
-                                {creator.bio}
-                            </p>
-                        )}
+                            {creator.bio && (
+                                <p className="text-sm text-gray-700 mb-4 line-clamp-2">
+                                    {creator.bio}
+                                </p>
+                            )}
 
-                        {/* Stats */}
-                        <div className="flex items-center justify-center space-x-6 mb-4 text-sm">
-                            <div className="flex items-center space-x-1 text-gray-600">
-                                <Heart className="w-4 h-4" />
-                                <span>{formatCompactNumber(parseInt(creator.totalAmountReceived) / 1e18)} CELO</span>
+                            {/* Stats */}
+                            <div className="flex items-center justify-center space-x-6 mb-4 text-sm">
+                                <div className="flex items-center space-x-1 text-gray-600">
+                                    <Heart className="w-4 h-4" />
+                                    <span>{formatCompactNumber(parseInt(creator.totalAmountReceived) / 1e18)} CELO</span>
+                                </div>
+                                <div className="flex items-center space-x-1 text-gray-600">
+                                    <Users className="w-4 h-4" />
+                                    <span>{creator.tippedByCount} supporters</span>
+                                </div>
                             </div>
-                            <div className="flex items-center space-x-1 text-gray-600">
-                                <Users className="w-4 h-4" />
-                                <span>{creator.tippedByCount} supporters</span>
-                            </div>
-                        </div>
 
-                        {/* Actions */}
-                        <div className="flex space-x-2">
-                            <Link to={`/${creator.basename}`} className="flex-1">
-                                <Button variant="outline" className="w-full" size="sm">
-                                    View Profile
+                            {/* Actions */}
+                            <div className="flex space-x-2" onClick={(e) => e.preventDefault()}>
+                                <Button
+                                    variant="outline"
+                                    className="flex-1"
+                                    size="sm"
+                                    asChild
+                                >
+                                    <Link to={`/${creator.basename}`}>
+                                        View Profile
+                                    </Link>
                                 </Button>
-                            </Link>
-                            <Button
-                                onClick={handleTipClick}
-                                className="flex-1"
-                                size="sm"
-                            >
-                                Send Tip
-                            </Button>
+                                <Button
+                                    onClick={handleTipClick}
+                                    className="flex-1"
+                                    size="sm"
+                                >
+                                    Send Tip
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                </CardContent>
+                    </CardContent>
+                </Link>
             </Card>
 
             {/* Tip Modal */}

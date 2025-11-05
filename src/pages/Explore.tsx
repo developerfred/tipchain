@@ -18,6 +18,10 @@ import { formatEth } from '../lib/utils'
 import { useChainId } from 'wagmi'
 import { isNetworkSupported } from '../config/contracts'
 import toast from 'react-hot-toast'
+import { useCurrency } from '../utils/currency'
+
+// Dentro do componente:
+
 
 const SORT_OPTIONS = [
   { value: 'totalAmountReceived' as SortBy, label: 'Total Received', icon: TrendingUp },
@@ -29,6 +33,7 @@ const SORT_OPTIONS = [
 export function Explore() {
   const chainId = useChainId()
   const isSupportedNetwork = chainId ? isNetworkSupported(chainId) : false
+  const { symbol, formatAmount } = useCurrency()
 
   const [sortBy, setSortBy] = useState<SortBy>('totalAmountReceived')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
@@ -165,7 +170,7 @@ export function Explore() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatEth(stats.totalVolume, 2)} ETH
+              {formatEth(stats.totalVolume, 2)} {symbol}
             </div>
             <p className="text-xs text-muted-foreground">Total value tipped</p>
           </CardContent>

@@ -26,7 +26,10 @@ import { isReferralEnabled } from '../lib/divvi'
 import toast from 'react-hot-toast'
 import QRCodeReact from 'qrcode.react'
 
+import { useCurrency } from '../utils/currency'
+
 export function Dashboard() {
+  const { symbol, formatAmount } = useCurrency()
   const { address, isConnected } = useAccount()
   const chainId = useChainId()
   const [showQRModal, setShowQRModal] = useState(false)
@@ -200,7 +203,7 @@ export function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {formatEth(totalAmountReceived, 4)} ETH
+                {formatEth(totalAmountReceived, 4)} CELO
               </div>
               <p className="text-xs text-muted-foreground">
                 All-time earnings
@@ -228,7 +231,7 @@ export function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {tipCount > 0 ? formatEth(BigInt(Math.floor(averageTip)), 4) : '0.00'} ETH
+                {tipCount > 0 ? formatEth(BigInt(Math.floor(averageTip)), 4) : '0.00'} {}
               </div>
               <p className="text-xs text-muted-foreground">
                 Per tip
@@ -347,7 +350,7 @@ export function Dashboard() {
                           {tip.from.displayName || shortenAddress(tip.from.address)}
                         </span>
                         <span className="text-sm text-muted-foreground">
-                          tipped {formatEth(BigInt(tip.amount), 4)} ETH
+                          tipped {formatEth(BigInt(tip.amount), 4)} {symbol}
                         </span>
                       </div>
                       {tip.message && (

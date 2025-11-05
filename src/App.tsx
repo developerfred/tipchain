@@ -8,7 +8,6 @@ import { Dashboard } from './pages/Dashboard'
 import { BecomeCreator } from './pages/BecomeCreator'
 import { HowItWorks } from './pages/HowItWorks'
 import { InvestorDeck } from './pages/Deck'
-import { Profile } from './pages/Profile'
 
 function App() {
   return (
@@ -25,17 +24,17 @@ function App() {
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/explore" element={<Explore />} />
-              <Route path="/tip/:basename" element={<CreatorProfile />} />
-              <Route path="/profile/:address" element={<CreatorProfile />} />
+              <Route path="/:identifier" element={<CreatorProfile />} />
+              <Route path="/tip/:identifier" element={<CreatorProfile />} />
+              <Route path="/profile/:address" element={<CreatorProfile />} />              
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/creators" element={<BecomeCreator />} />
               <Route path="/how-it-works" element={<HowItWorks />} />
-              <Route path="/deck" element={<InvestorDeck />} />
-              <Route path="/profile" element={<Profile />} />  
+              <Route path="/deck" element={<InvestorDeck />} />              
             </Routes>
           </main>
         </div>
-      </Router>
+      </Router>      
     </AppProviders>
   )
 }
