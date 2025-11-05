@@ -11,14 +11,18 @@ import {
   Share2,
   QrCode,
   Loader2,
-  MessageCircle
+  MessageCircle,
+  Edit,
+  Settings
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { NetworkBadge } from '../components/NetworkBadge'
+import { EditProfileModal } from '../components/EditProfileModal'
 import { isNetworkSupported } from '../config/contracts'
 import { formatEth, formatTimeAgo, shortenAddress, generateTipLink, copyToClipboard } from '../lib/utils'
 import { useDashboard } from '../hooks/useDashboard'
+import { isReferralEnabled } from '../lib/divvi'
 import toast from 'react-hot-toast'
 import QRCodeReact from 'qrcode.react'
 
@@ -26,10 +30,11 @@ export function Dashboard() {
   const { address, isConnected } = useAccount()
   const chainId = useChainId()
   const [showQRModal, setShowQRModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
 
   const isSupportedNetwork = chainId ? isNetworkSupported(chainId) : false
 
-  const { creator, tipsReceived, stats, isLoading, error, isCreator } = useDashboard(address)
+  const { creator, tipsReceived, stats, isLoading, error, isCreator, refetch } = useDashboard(address)
 
   if (!isConnected) {
     return (
@@ -140,12 +145,18 @@ export function Dashboard() {
         })
         toast.success('Profile shared!')
       } catch (err) {
-        // User cancelled share
         console.log('Share cancelled:', err)
       }
     } else {
       handleCopyLink()
     }
+  }
+
+  const handleEditSuccess = () => {
+    toast.success('Refreshing your profile...')
+    setTimeout(() => {
+      refetch()
+    }, 2000) // Wait 2s for blockchain to update
   }
 
   const totalAmountReceived = stats?.totalAmountReceived ? BigInt(stats.totalAmountReceived) : BigInt(0)
@@ -162,6 +173,13 @@ export function Dashboard() {
             <p className="text-muted-foreground">
               Manage your creator profile and tips
             </p>
+            {isReferralEnabled() && (
+              <div className="flex items-center gap-2 mt-2">
+                <div className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                  📊 Divvi Tracking Enabled
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex gap-2">
             <Link to={`/profile/${creator.address}`}>
@@ -221,11 +239,21 @@ export function Dashboard() {
 
         {/* Profile Info */}
         <Card>
-          <CardHeader>
-            <CardTitle>Your Profile</CardTitle>
-            <CardDescription>
-              Your creator information on {chainId && <NetworkBadge chainId={chainId} size="sm" />}
-            </CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Your Profile</CardTitle>
+              <CardDescription>
+                Your creator information on {chainId && <NetworkBadge chainId={chainId} size="sm" />}
+              </CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowEditModal(true)}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Profile
+            </Button>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-4">
@@ -382,6 +410,16 @@ export function Dashboard() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Edit Profile Modal */}
+      {creator && (
+        <EditProfileModal
+          creator={creator}
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onSuccess={handleEditSuccess}
+        />
       )}
     </div>
   )
