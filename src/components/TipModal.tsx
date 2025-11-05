@@ -3,14 +3,20 @@ import { X, Heart, DollarSign, Loader2 } from 'lucide-react'
 import { Button } from './ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/Card'
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi'
-import { parseEther } from 'viem'
+import { parseEther, encodeFunctionData } from 'viem'
 import toast from 'react-hot-toast'
 import {
     TIPCHAIN_ABI,
     getTipChainContractAddress,
     isNetworkSupported,
-    getNetworkConfig,    
+    getNetworkConfig,
 } from '../config/contracts'
+import {
+    appendReferralTag,
+    submitDivviReferral,
+    storeReferralData,
+    isReferralEnabled
+} from '../lib/divvi'
 
 interface TipModalProps {
     creator: {
@@ -39,7 +45,6 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
         hash,
     })
 
-
     useEffect(() => {
         if (chainId) {
             const isSupported = isNetworkSupported(chainId)
@@ -50,10 +55,17 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                 setCurrentContractAddress(contractAddress)
 
                 const networkConfig = getNetworkConfig(chainId)
-                console.log(`connect: ${networkConfig?.name}`)
+                console.log(`Connected to: ${networkConfig?.name}`)
+
+                // Log referral status
+                if (isReferralEnabled()) {
+                    console.log('✅ Divvi Referral tracking enabled')
+                } else {
+                    console.log('⚠️ Divvi Referral tracking disabled')
+                }
             } else {
-                console.warn(`netowrk not supported : ${chainId}`)
-                toast.error(`netowrk not supported, change to base or celo`)
+                console.warn(`Network not supported: ${chainId}`)
+                toast.error('Network not supported, change to Base or Celo')
             }
         }
     }, [chainId, chain])
@@ -79,15 +91,35 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
             return
         }
 
+        if (!address) {
+            toast.error('Wallet address not found')
+            return
+        }
+
         try {
             const amountInWei = parseEther(amount)
 
+            // Encode function call
+            let data = encodeFunctionData({
+                abi: TIPCHAIN_ABI,
+                functionName: 'tipETH',
+                args: [creator.address as `0x${string}`, message],
+            })
+
+            // Append Divvi referral tag if enabled
+            if (isReferralEnabled()) {
+                console.log('📊 Appending Divvi referral tag...')
+                data = appendReferralTag(data, address)
+            }
+
+            // Send transaction with referral tag
             writeContract({
                 address: currentContractAddress as `0x${string}`,
                 abi: TIPCHAIN_ABI,
                 functionName: 'tipETH',
-                args: [creator.address, message],
+                args: [creator.address as `0x${string}`, message],
                 value: amountInWei,
+                data, // Include data with referral tag
             })
 
             toast.success('Transaction submitted!')
@@ -96,7 +128,7 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
             toast.error(error.message || 'Failed to send tip')
         }
     }
-    
+
     const getCurrencySymbol = () => {
         if (!chainId) return 'ETH'
 
@@ -109,14 +141,12 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
         return 'ETH'
     }
 
-    // Função para obter o nome da rede atual
     const getCurrentNetworkName = () => {
         if (!chainId) return ''
         const networkConfig = getNetworkConfig(chainId)
         return networkConfig?.name || 'Unknown Network'
     }
 
-    // Função para obter o nome curto da rede
     const getShortNetworkName = () => {
         if (!chainId) return ''
         const networkConfig = getNetworkConfig(chainId)
@@ -125,15 +155,40 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
         return networkConfig?.name || 'Unknown'
     }
 
-    
+    // Handle successful transaction
     useEffect(() => {
-        if (isSuccess) {
-            toast.success(`Successfully tipped ${amount} ${getCurrencySymbol()} to ${creator.displayName}!`)
-            onClose()
-            setAmount('5')
-            setMessage('')
+        const handleSuccess = async () => {
+            if (isSuccess && hash && chainId && address) {
+                // Submit referral to Divvi
+                if (isReferralEnabled()) {
+                    console.log('📤 Submitting referral to Divvi...')
+                    await submitDivviReferral(hash, chainId)
+
+                    // Store referral data locally
+                    storeReferralData({
+                        txHash: hash,
+                        chainId,
+                        userAddress: address,
+                        timestamp: Date.now(),
+                        submitted: true,
+                    })
+                }
+
+                // Show success message
+                toast.success(
+                    `Successfully tipped ${amount} ${getCurrencySymbol()} to ${creator.displayName}!`
+                )
+
+                // Close modal and reset
+                onClose()
+                setAmount('5')
+                setMessage('')
+                setCustomAmount(false)
+            }
         }
-    }, [isSuccess])
+
+        handleSuccess()
+    }, [isSuccess, hash, chainId, address])
 
     if (!isOpen) return null
 
@@ -166,13 +221,20 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                             <CardTitle className="truncate">Tip {creator.displayName}</CardTitle>
                             <CardDescription className="truncate">@{creator.basename}</CardDescription>
                             {isConnected && (
-                                <div className="flex items-center mt-1">
-                                    <div className={`text-xs px-2 py-1 rounded-full ${isWrongNetwork
-                                            ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                                            : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                        }`}>
-                                        {isWrongNetwork ? 'Rede não suportada' : getShortNetworkName()}
+                                <div className="flex items-center gap-2 mt-1">
+                                    <div
+                                        className={`text-xs px-2 py-1 rounded-full ${isWrongNetwork
+                                                ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                                : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                            }`}
+                                    >
+                                        {isWrongNetwork ? 'Unsupported Network' : getShortNetworkName()}
                                     </div>
+                                    {isReferralEnabled() && !isWrongNetwork && (
+                                        <div className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                            Divvi ✓
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -183,11 +245,9 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                     {/* Network Warning */}
                     {isWrongNetwork && (
                         <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                            <p className="text-red-800 text-sm font-medium">
-                                Rede não suportada
-                            </p>
+                            <p className="text-red-800 text-sm font-medium">Unsupported Network</p>
                             <p className="text-red-600 text-xs mt-1">
-                                Conectado à {getCurrentNetworkName()}. Por favor, mude para Celo ou Base para enviar tips.
+                                Connected to {getCurrentNetworkName()}. Please switch to Celo or Base to send tips.
                             </p>
                         </div>
                     )}
@@ -201,7 +261,7 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                             {PRESET_AMOUNTS.map((preset) => (
                                 <Button
                                     key={preset}
-                                    variant={amount === preset.toString() && !customAmount ? "default" : "outline"}
+                                    variant={amount === preset.toString() && !customAmount ? 'default' : 'outline'}
                                     onClick={() => {
                                         setAmount(preset.toString())
                                         setCustomAmount(false)
@@ -236,9 +296,7 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
 
                     {/* Message */}
                     <div>
-                        <label className="text-sm font-medium mb-2 block">
-                            Add a Message (Optional)
-                        </label>
+                        <label className="text-sm font-medium mb-2 block">Add a Message (Optional)</label>
                         <textarea
                             placeholder="Say something nice..."
                             value={message}
@@ -248,28 +306,38 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                             className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                             disabled={isWrongNetwork || !isConnected}
                         />
-                        <p className="text-xs text-muted-foreground mt-1">
-                            {message.length}/200 characters
-                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">{message.length}/200 characters</p>
                     </div>
 
                     {/* Summary */}
                     <div className="rounded-lg border bg-muted/50 p-4 space-y-2">
                         <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Amount</span>
-                            <span className="font-medium">{amount} {getCurrencySymbol()}</span>
+                            <span className="font-medium">
+                                {amount} {getCurrencySymbol()}
+                            </span>
                         </div>
                         <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Platform Fee (2.5%)</span>
-                            <span className="font-medium">{(parseFloat(amount || '0') * 0.025).toFixed(4)} {getCurrencySymbol()}</span>
+                            <span className="font-medium">
+                                {(parseFloat(amount || '0') * 0.025).toFixed(4)} {getCurrencySymbol()}
+                            </span>
                         </div>
                         <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Gas Fee</span>
                             <span className="font-medium text-green-600">FREE (Sponsored)</span>
                         </div>
+                        {isReferralEnabled() && (
+                            <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">Referral Tracking</span>
+                                <span className="font-medium text-blue-600">Divvi Enabled ✓</span>
+                            </div>
+                        )}
                         <div className="border-t pt-2 flex justify-between font-semibold">
                             <span>Total</span>
-                            <span>{amount} {getCurrencySymbol()}</span>
+                            <span>
+                                {amount} {getCurrencySymbol()}
+                            </span>
                         </div>
                     </div>
 
@@ -286,7 +354,14 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                         <Button
                             className="flex-1"
                             onClick={handleTip}
-                            disabled={!isConnected || isWrongNetwork || isPending || isConfirming || !amount || !currentContractAddress}
+                            disabled={
+                                !isConnected ||
+                                isWrongNetwork ||
+                                isPending ||
+                                isConfirming ||
+                                !amount ||
+                                !currentContractAddress
+                            }
                         >
                             {isPending || isConfirming ? (
                                 <>
