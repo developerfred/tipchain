@@ -9,6 +9,7 @@ import { BecomeCreator } from './pages/BecomeCreator'
 import { HowItWorks } from './pages/HowItWorks'
 import { InvestorDeck } from './pages/Deck'
 
+
 function App() {
   return (
     <AppProviders>
@@ -34,7 +35,9 @@ function App() {
             </Routes>
           </main>
         </div>
-      </Router>      
+      </Router>
+
+
     </AppProviders>
   )
 }
