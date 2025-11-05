@@ -11,4 +11,16 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'web3-vendor': ['viem', 'wagmi', '@reown/appkit'],
+          'graphql-vendor': ['urql', 'graphql'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000,
+  },
 })
