@@ -444,6 +444,13 @@ export const SUPPORTED_TOKENS: Record<number, Token[]> = {
   // Celo Mainnet
   42220: [
     {
+      address: '0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A',
+      name: 'GoodDollar',
+      symbol: 'G$',
+      decimals: 2,
+      isNative: false
+    },
+    {
       address: '0x0000000000000000000000000000000000000000',
       name: 'Celo Native',
       symbol: 'CELO',
