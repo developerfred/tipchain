@@ -40,7 +40,7 @@ export const NETWORK_CONFIGS: Record<SupportedNetworks, NetworkConfig> = {
 export const TIPCHAIN_CONTRACT_ADDRESSES: Record<SupportedNetworks, string> = {
   [SupportedNetworks.CELO]: '0x1d4c400F9706a3b6fc9fe4246548954C556b7E2f',
   [SupportedNetworks.CELO_ALFAJORES]: '0x1d4c400F9706a3b6fc9fe4246548954C556b7E2f', 
-  [SupportedNetworks.BASE]: '0xA1558418153fbfb5799be94f6b238eEC583c8F84', 
+  [SupportedNetworks.BASE]: '0x059c8999544260E483D212147da9F082EF0714f9', 
   [SupportedNetworks.BASE_SEPOLIA]: '0xA1558418153fbfb5799be94f6b238eEC583c8F84' 
 };
 
@@ -59,6 +59,7 @@ export const getTipChainContractAddress = (chainId: number | string): string => 
   return TIPCHAIN_CONTRACT_ADDRESSES[SupportedNetworks.CELO];
 };
 
+export const DEFAULT_CHAIN_ID = 8453
 
 export const isNetworkSupported = (chainId: number | string): boolean => {
   return Object.values(NETWORK_CONFIGS).some(
@@ -386,3 +387,102 @@ export const TIPCHAIN_ABI = [
     "type": "function"
   }
 ] as const
+
+
+export interface Token {
+  address: string
+  name: string
+  symbol: string
+  decimals: number
+  isNative: boolean
+  logoURI?: string
+}
+
+export const SUPPORTED_TOKENS: Record<number, Token[]> = {
+  // Base Mainnet
+  8453: [
+    {
+      address: '0x0000000000000000000000000000000000000000',
+      name: 'Ethereum',
+      symbol: 'ETH',
+      decimals: 18,
+      isNative: true
+    },
+    {
+      address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+      name: 'USD Coin',
+      symbol: 'USDC',
+      decimals: 6,
+      isNative: false
+    },
+    {
+      address: '0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb',
+      name: 'Dai Stablecoin',
+      symbol: 'DAI',
+      decimals: 18,
+      isNative: false
+    }
+  ],
+  // Base Testnet
+  84531: [
+    {
+      address: '0x0000000000000000000000000000000000000000',
+      name: 'Ethereum',
+      symbol: 'ETH',
+      decimals: 18,
+      isNative: true
+    },
+    {
+      address: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
+      name: 'USD Coin',
+      symbol: 'USDC',
+      decimals: 6,
+      isNative: false
+    }
+  ],
+  // Celo Mainnet
+  42220: [
+    {
+      address: '0x0000000000000000000000000000000000000000',
+      name: 'Celo Native',
+      symbol: 'CELO',
+      decimals: 18,
+      isNative: true
+    },
+    {
+      address: '0x765DE816845861e75A25fCA122bb6898B8B1282a',
+      name: 'Celo Dollar',
+      symbol: 'cUSD',
+      decimals: 18,
+      isNative: false
+    },
+    {
+      address: '0xef4229c8c3250C675F21BCefa42f58EfbfF6002a',
+      name: 'USD Coin',
+      symbol: 'USDC',
+      decimals: 6,
+      isNative: false
+    }
+  ],
+  // Celo Testnet
+  44787: [
+    {
+      address: '0x0000000000000000000000000000000000000000',
+      name: 'Celo Native',
+      symbol: 'CELO',
+      decimals: 18,
+      isNative: true
+    },
+    {
+      address: '0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1',
+      name: 'Celo Dollar',
+      symbol: 'cUSD',
+      decimals: 18,
+      isNative: false
+    }
+  ]
+}
+
+export const getSupportedTokens = (chainId: number): Token[] => {
+  return SUPPORTED_TOKENS[chainId] || []
+}
