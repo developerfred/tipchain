@@ -3,6 +3,7 @@
 > Multi-chain tipping platform built with Reown AppKit and Base L2
 
 **Built for:**
+
 - 🏆 Base Batch 002 - Builder Track
 - 🏆 Reown AppKit Competition
 
