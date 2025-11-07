@@ -7,6 +7,8 @@ import { Button } from '../components/ui/Button'
 import { TIPCHAIN_ABI, getTipChainContractAddress, isNetworkSupported, DEFAULT_CHAIN_ID } from '../config/contracts'
 import { isValidBasename } from '../lib/utils'
 import toast from 'react-hot-toast'
+import { useFarcaster } from '../providers/FarcasterProvider'
+
 
 // Declaração do tipo para o Farcaster Mini App
 declare global {
@@ -37,6 +39,7 @@ export function BecomeCreator() {
     const [bio, setBio] = useState('')
     const [avatarUrl, setAvatarUrl] = useState('')
     const [basenameError, setBasenameError] = useState('')
+    const { isMiniApp, user, isLoading: farcasterLoading } = useFarcaster()
 
     // Usar Base como default chain para Farcaster
     const effectiveChainId = chainId || DEFAULT_CHAIN_ID
@@ -51,12 +54,9 @@ export function BecomeCreator() {
     // Carregar dados do usuário do Farcaster
     useEffect(() => {
         const loadFarcasterUser = async () => {
-            if (window.fc?.miniapp) {
+            if (isMiniApp && user && !farcasterLoading) {
                 setIsLoadingUser(true)
                 try {
-                    const user = await window.fc.miniapp.getUser()
-
-                    // Preencher automaticamente com dados do Farcaster
                     setDisplayName(user.displayName || user.username)
                     setBio(user.bio || '')
                     setAvatarUrl(user.pfpUrl || '')
@@ -66,7 +66,7 @@ export function BecomeCreator() {
                     setBasename(generatedBasename)
                     validateBasename(generatedBasename)
 
-                    toast.success('Profile loaded from Farcaster!')
+                    toast.success('Perfil do Farcaster carregado!')
                 } catch (error) {
                     console.error('Error loading Farcaster user:', error)
                     toast.error('Could not load Farcaster profile')
@@ -153,18 +153,24 @@ export function BecomeCreator() {
 
     if (!isConnected) {
         return (
-            <div className="container py-24">
-                <div className="max-w-md mx-auto text-center space-y-6">
-                    <div className="text-6xl">🎨</div>
-                    <h1 className="text-3xl font-bold">Become a Creator</h1>
-                    <p className="text-muted-foreground">
-                        {isFarcasterMiniApp
-                            ? "Connect your wallet to start receiving tips from your Farcaster followers"
-                            : "Connect your wallet to start receiving tips"
-                        }
-                    </p>
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-900/20">
+                <div className="container py-16">
+                    <div className="max-w-4xl mx-auto">
+                        {/* Header */}
+                        <div className="text-center mb-16">
+                            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-br from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+                                {isMiniApp ? "Join TipChain on Farcaster" : "Join TipChain"}
+                            </h1>
+                            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                                {isMiniApp
+                                    ? "Connect your wallet to start receiving tips from your Farcaster followers"
+                                    : "Connect your wallet to start receiving tips from your community"
+                                }
+                            </p>
+                        </div>
                     <appkit-button />
                 </div>
+            </div>
             </div>
         )
     }
