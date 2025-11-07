@@ -152,6 +152,7 @@ export function BecomeCreator() {
                     </div>
                 </div>
             </div>
+            </div>
         )
     }
 
