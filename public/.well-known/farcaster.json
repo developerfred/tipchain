@@ -4,8 +4,8 @@
         "payload": "eyJkb21haW4iOiJ0aW1icmEuYWlwb3AuZnVuIn0",
         "signature": "MHgzZWUzN2ZhY2FhOWM2MjEyMDMzNjhmOTRjNDE0YjYyMTY4NzYzMGFjMDdjYTRlZTNiOTk3MDQ4MGY0MGU3YjMwNzE3NzFhMWQzYjk5NDc3ZjA3NDMwYmYxYTJlNTg5ZjE4NDljNjdmY2M4NWFlMDJhNWQwOWE3MTI5NjIyZGUwYjFi"
     },
-    "frame": {
-        "version": "next",
+    "miniapp": {
+        "version": "1",
         "name": "TipChain",
         "iconUrl": "https://tipchain.aipop.fun/icon.png",
         "homeUrl": "https://tipchain.aipop.fun",
