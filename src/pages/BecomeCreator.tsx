@@ -40,7 +40,7 @@ import toast from "react-hot-toast";
 import { useFarcaster } from "../providers/FarcasterProvider";
 import { SmartConnect } from "../components/SmartConnect";
 
-// Componente de Input Moderno
+
 function ModernInput({
   label,
   value,
@@ -115,7 +115,7 @@ function ModernInput({
   );
 }
 
-// Componente de Preview do Perfil
+
 function ProfilePreview({
   creator,
   isFarcaster = false,
@@ -175,7 +175,7 @@ function ProfilePreview({
   );
 }
 
-// Componente de Step Indicator
+
 function StepIndicator({
   currentStep,
   totalSteps,
@@ -246,7 +246,7 @@ export function BecomeCreator() {
     hash,
   });
 
-  // Carregar dados do Farcaster
+
   useEffect(() => {
     const loadFarcasterUser = async () => {
       if (isMiniApp && user && !farcasterLoading && isInitialized) {
@@ -409,7 +409,7 @@ export function BecomeCreator() {
     );
   }
 
-  // Conteúdo principal do formulário
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 py-8">
       <div className="max-w-2xl mx-auto p-4 space-y-8">
@@ -428,10 +428,8 @@ export function BecomeCreator() {
           </p>
         </div>
 
-        {/* Step Indicator */}
         <StepIndicator currentStep={currentStep} totalSteps={3} />
 
-        {/* Form Content */}
         <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
           <CardContent className="p-8">
             {isLoadingUser ? (
@@ -479,7 +477,6 @@ export function BecomeCreator() {
                       required
                     />
 
-                    {/* Preview */}
                     {(formData.basename || formData.displayName) && (
                       <ProfilePreview
                         creator={formData}
@@ -521,8 +518,7 @@ export function BecomeCreator() {
                     </div>
                   </div>
                 )}
-
-                {/* Step 2: Additional Details */}
+               
                 {currentStep === 2 && (
                   <div className="space-y-6">
                     <div className="text-center space-y-2">
@@ -584,8 +580,7 @@ export function BecomeCreator() {
                     </div>
                   </div>
                 )}
-
-                {/* Step 3: Review & Submit */}
+                
                 {currentStep === 3 && (
                   <div className="space-y-6">
                     <div className="text-center space-y-2">
@@ -683,7 +678,7 @@ export function BecomeCreator() {
           </CardContent>
         </Card>
 
-        {/* Benefits Cards */}
+
         <div className="grid gap-6 md:grid-cols-3">
           {[
             {

@@ -21,7 +21,7 @@ interface CompactCreatorCarouselProps {
   showStats?: boolean;
 }
 
-// Função para gerar avatar baseado no nome do creator
+
 function generateAvatar(name: string, size: number = 40) {
   const colors = [
     "ff6b6b",
@@ -48,7 +48,7 @@ function generateAvatar(name: string, size: number = 40) {
 
   const color = colors[Math.abs(hash) % colors.length];
 
-  // Gerar iniciais
+ 
   const initials = name
     .split(" ")
     .map((word) => word.charAt(0))
@@ -59,7 +59,7 @@ function generateAvatar(name: string, size: number = 40) {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=${color}&color=fff&size=${size}&bold=true&font-size=0.8`;
 }
 
-// Componente de Avatar com fallback
+/
 function CreatorAvatar({
   creator,
   size = 40,
@@ -92,7 +92,7 @@ function CreatorAvatar({
   );
 }
 
-// Componente de Badge para stats
+
 function StatsBadge({
   icon: Icon,
   value,

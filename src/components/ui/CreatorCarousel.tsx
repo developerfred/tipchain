@@ -42,7 +42,7 @@ export function CreatorCarousel({
     setCurrentIndex(index);
   };
 
-  // Auto-play functionality
+
   useEffect(() => {
     if (!autoPlay || isPaused || creators.length <= 1) return;
 
@@ -50,7 +50,7 @@ export function CreatorCarousel({
     return () => clearInterval(interval);
   }, [autoPlay, isPaused, creators.length, autoPlayInterval]);
 
-  // Touch handlers for mobile swipe
+
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
   };
@@ -89,7 +89,7 @@ export function CreatorCarousel({
           </p>
         </div>
 
-        {/* Carousel Container */}
+
         <div
           className="relative"
           onMouseEnter={() => setIsPaused(true)}
@@ -98,7 +98,7 @@ export function CreatorCarousel({
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          {/* Navigation Arrows */}
+
           {creators.length > 1 && (
             <>
               <Button
@@ -123,7 +123,7 @@ export function CreatorCarousel({
             </>
           )}
 
-          {/* Carousel Content */}
+
           <div className="overflow-hidden rounded-2xl">
             <div
               className="flex transition-transform duration-500 ease-in-out"
@@ -140,7 +140,7 @@ export function CreatorCarousel({
             </div>
           </div>
 
-          {/* Indicators */}
+
           {creators.length > 1 && (
             <div className="flex justify-center mt-8 space-x-2">
               {creators.map((_, index) => (
@@ -159,7 +159,7 @@ export function CreatorCarousel({
           )}
         </div>
 
-        {/* CTA */}
+
         <div className="text-center mt-12">
           <Link to="/explore">
             <Button size="lg" variant="outline">
@@ -173,7 +173,7 @@ export function CreatorCarousel({
   );
 }
 
-// Componente para o card em destaque
+
 function CreatorFeaturedCard({
   creator,
   isActive,
@@ -185,7 +185,6 @@ function CreatorFeaturedCard({
     <Card className="group relative overflow-hidden border-0 shadow-2xl bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-800/50">
       <CardContent className="p-0">
         <div className="grid md:grid-cols-2 gap-8 p-8">
-          {/* Left Column - Creator Info */}
           <div className="flex flex-col justify-center space-y-6">
             <div className="flex items-start justify-between">
               <div className="flex items-center space-x-4">
@@ -258,7 +257,7 @@ function CreatorFeaturedCard({
           <div className="relative hidden md:block">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-600/10 rounded-2xl transform group-hover:scale-105 transition-transform duration-500" />
 
-            {/* Network Badges */}
+
             <div className="absolute top-6 right-6 flex space-x-2">
               <div className="flex items-center space-x-1 bg-blue-500/20 px-3 py-1 rounded-full text-sm font-medium text-blue-700 dark:text-blue-300 backdrop-blur-sm">
                 <div className="h-2 w-2 rounded-full bg-blue-500" />
@@ -266,7 +265,7 @@ function CreatorFeaturedCard({
               </div>
             </div>
 
-            {/* Floating Elements */}
+
             <div className="absolute bottom-8 left-8 transform rotate-12">
               <div className="bg-yellow-500/20 p-4 rounded-2xl backdrop-blur-sm">
                 <div className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">

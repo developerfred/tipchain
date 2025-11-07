@@ -54,7 +54,7 @@ export function Landing() {
     totalCreators: platformStats?.totalCreators || 10500,
     totalSupporters: 50000,
     totalVolume:
-      platformStats?.totalVolume || BigInt(2500000000000000000000000), // 2.5M em wei
+      platformStats?.totalVolume || BigInt(2500000000000000000000000), 
   };
 
   return (
@@ -156,7 +156,7 @@ export function Landing() {
         </div>
       </section>
 
-      {/* Featured Creators Carousel */}
+
       {featuredCreators.length > 0 && (
         <CreatorCarousel
           creators={featuredCreators}
@@ -167,7 +167,7 @@ export function Landing() {
         />
       )}
 
-      {/* Features Section Melhorada */}
+
       <section className="relative py-24 bg-gradient-to-b from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-800/50">
         <div className="container relative">
           <div className="text-center mb-20">
@@ -187,6 +187,8 @@ export function Landing() {
               Web3 technology that's simple, secure, and accessible to all.
             </p>
           </div>
+        </section>
+      )}
 
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {[
