@@ -40,7 +40,7 @@ export const NETWORK_CONFIGS: Record<SupportedNetworks, NetworkConfig> = {
 export const TIPCHAIN_CONTRACT_ADDRESSES: Record<SupportedNetworks, string> = {
   [SupportedNetworks.CELO]: '0x1d4c400F9706a3b6fc9fe4246548954C556b7E2f',
   [SupportedNetworks.CELO_ALFAJORES]: '0x1d4c400F9706a3b6fc9fe4246548954C556b7E2f', 
-  [SupportedNetworks.BASE]: '0xA1558418153fbfb5799be94f6b238eEC583c8F84', 
+  [SupportedNetworks.BASE]: '0x059c8999544260E483D212147da9F082EF0714f9', 
   [SupportedNetworks.BASE_SEPOLIA]: '0xA1558418153fbfb5799be94f6b238eEC583c8F84' 
 };
 
@@ -59,6 +59,7 @@ export const getTipChainContractAddress = (chainId: number | string): string => 
   return TIPCHAIN_CONTRACT_ADDRESSES[SupportedNetworks.CELO];
 };
 
+export const DEFAULT_CHAIN_ID = 8453
 
 export const isNetworkSupported = (chainId: number | string): boolean => {
   return Object.values(NETWORK_CONFIGS).some(
