@@ -387,3 +387,102 @@ export const TIPCHAIN_ABI = [
     "type": "function"
   }
 ] as const
+
+
+export interface Token {
+  address: string
+  name: string
+  symbol: string
+  decimals: number
+  isNative: boolean
+  logoURI?: string
+}
+
+export const SUPPORTED_TOKENS: Record<number, Token[]> = {
+  // Base Mainnet
+  8453: [
+    {
+      address: '0x0000000000000000000000000000000000000000',
+      name: 'Ethereum',
+      symbol: 'ETH',
+      decimals: 18,
+      isNative: true
+    },
+    {
+      address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+      name: 'USD Coin',
+      symbol: 'USDC',
+      decimals: 6,
+      isNative: false
+    },
+    {
+      address: '0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb',
+      name: 'Dai Stablecoin',
+      symbol: 'DAI',
+      decimals: 18,
+      isNative: false
+    }
+  ],
+  // Base Testnet
+  84531: [
+    {
+      address: '0x0000000000000000000000000000000000000000',
+      name: 'Ethereum',
+      symbol: 'ETH',
+      decimals: 18,
+      isNative: true
+    },
+    {
+      address: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
+      name: 'USD Coin',
+      symbol: 'USDC',
+      decimals: 6,
+      isNative: false
+    }
+  ],
+  // Celo Mainnet
+  42220: [
+    {
+      address: '0x0000000000000000000000000000000000000000',
+      name: 'Celo Native',
+      symbol: 'CELO',
+      decimals: 18,
+      isNative: true
+    },
+    {
+      address: '0x765DE816845861e75A25fCA122bb6898B8B1282a',
+      name: 'Celo Dollar',
+      symbol: 'cUSD',
+      decimals: 18,
+      isNative: false
+    },
+    {
+      address: '0xef4229c8c3250C675F21BCefa42f58EfbfF6002a',
+      name: 'USD Coin',
+      symbol: 'USDC',
+      decimals: 6,
+      isNative: false
+    }
+  ],
+  // Celo Testnet
+  44787: [
+    {
+      address: '0x0000000000000000000000000000000000000000',
+      name: 'Celo Native',
+      symbol: 'CELO',
+      decimals: 18,
+      isNative: true
+    },
+    {
+      address: '0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1',
+      name: 'Celo Dollar',
+      symbol: 'cUSD',
+      decimals: 18,
+      isNative: false
+    }
+  ]
+}
+
+export const getSupportedTokens = (chainId: number): Token[] => {
+  return SUPPORTED_TOKENS[chainId] || []
+}
