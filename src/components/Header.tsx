@@ -1,12 +1,12 @@
-import { Link } from 'react-router-dom'
-import { Coins, Menu, X } from 'lucide-react'
-import { useState } from 'react'
-import { Button } from './ui/Button'
-import { useAccount } from 'wagmi'
+import { Link } from "react-router-dom";
+import { Coins, Menu, X } from "lucide-react";
+import { useState } from "react";
+import { Button } from "./ui/Button";
+import { useAccount } from "wagmi";
 
 export function Header() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { address, isConnected } = useAccount()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { address, isConnected } = useAccount();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -21,21 +21,21 @@ export function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6">
-          <Link 
-            to="/explore" 
+          <Link
+            to="/explore"
             className="text-sm font-medium transition-colors hover:text-primary"
           >
             Explore Creators
           </Link>
-          <Link 
-            to="/how-it-works" 
+          <Link
+            to="/how-it-works"
             className="text-sm font-medium transition-colors hover:text-primary"
           >
             How It Works
           </Link>
           {isConnected && (
-            <Link 
-              to="/dashboard" 
+            <Link
+              to="/dashboard"
               className="text-sm font-medium transition-colors hover:text-primary"
             >
               Dashboard
@@ -83,23 +83,23 @@ export function Header() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t bg-background">
           <nav className="container flex flex-col space-y-4 py-4">
-            <Link 
-              to="/explore" 
+            <Link
+              to="/explore"
               className="text-sm font-medium transition-colors hover:text-primary"
               onClick={() => setMobileMenuOpen(false)}
             >
               Explore Creators
             </Link>
-            <Link 
-              to="/how-it-works" 
+            <Link
+              to="/how-it-works"
               className="text-sm font-medium transition-colors hover:text-primary"
               onClick={() => setMobileMenuOpen(false)}
             >
               How It Works
             </Link>
             {isConnected && (
-              <Link 
-                to="/dashboard" 
+              <Link
+                to="/dashboard"
                 className="text-sm font-medium transition-colors hover:text-primary"
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -133,5 +133,5 @@ export function Header() {
         </div>
       )}
     </header>
-  )
+  );
 }

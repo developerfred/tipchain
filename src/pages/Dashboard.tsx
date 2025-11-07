@@ -1,7 +1,7 @@
-'use client'
-import { useState } from 'react'
-import { useAccount, useChainId } from 'wagmi'
-import { Link } from 'react-router-dom'
+"use client";
+import { useState } from "react";
+import { useAccount, useChainId } from "wagmi";
+import { Link } from "react-router-dom";
 import {
   Heart,
   TrendingUp,
@@ -13,31 +13,44 @@ import {
   Loader2,
   MessageCircle,
   Edit,
-  Settings
-} from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card'
-import { Button } from '../components/ui/Button'
-import { NetworkBadge } from '../components/NetworkBadge'
-import { EditProfileModal } from '../components/EditProfileModal'
-import { isNetworkSupported } from '../config/contracts'
-import { formatEth, formatTimeAgo, shortenAddress, generateTipLink, copyToClipboard } from '../lib/utils'
-import { useDashboard } from '../hooks/useDashboard'
-import { isReferralEnabled } from '../lib/divvi'
-import toast from 'react-hot-toast'
-import QRCodeReact from 'qrcode.react'
+  Settings,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/Card";
+import { Button } from "../components/ui/Button";
+import { NetworkBadge } from "../components/NetworkBadge";
+import { EditProfileModal } from "../components/EditProfileModal";
+import { isNetworkSupported } from "../config/contracts";
+import {
+  formatEth,
+  formatTimeAgo,
+  shortenAddress,
+  generateTipLink,
+  copyToClipboard,
+} from "../lib/utils";
+import { useDashboard } from "../hooks/useDashboard";
+import { isReferralEnabled } from "../lib/divvi";
+import toast from "react-hot-toast";
+import QRCodeReact from "qrcode.react";
 
-import { useCurrency } from '../utils/currency'
+import { useCurrency } from "../utils/currency";
 
 export function Dashboard() {
-  const { symbol, formatAmount } = useCurrency()
-  const { address, isConnected } = useAccount()
-  const chainId = useChainId()
-  const [showQRModal, setShowQRModal] = useState(false)
-  const [showEditModal, setShowEditModal] = useState(false)
+  const { symbol, formatAmount } = useCurrency();
+  const { address, isConnected } = useAccount();
+  const chainId = useChainId();
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
-  const isSupportedNetwork = chainId ? isNetworkSupported(chainId) : false
+  const isSupportedNetwork = chainId ? isNetworkSupported(chainId) : false;
 
-  const { creator, tipsReceived, stats, isLoading, error, isCreator, refetch } = useDashboard(address)
+  const { creator, tipsReceived, stats, isLoading, error, isCreator, refetch } =
+    useDashboard(address);
 
   if (!isConnected) {
     return (
@@ -51,7 +64,7 @@ export function Dashboard() {
           <appkit-button />
         </div>
       </div>
-    )
+    );
   }
 
   if (!isSupportedNetwork) {
@@ -70,7 +83,7 @@ export function Dashboard() {
           )}
         </div>
       </div>
-    )
+    );
   }
 
   if (isLoading && !creator) {
@@ -81,7 +94,7 @@ export function Dashboard() {
           <p className="text-muted-foreground">Loading your profile...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!isCreator) {
@@ -95,14 +108,12 @@ export function Dashboard() {
           </p>
           <div className="pt-4">
             <Link to="/creators">
-              <Button size="lg">
-                Become a Creator
-              </Button>
+              <Button size="lg">Become a Creator</Button>
             </Link>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (!creator) {
@@ -114,29 +125,25 @@ export function Dashboard() {
           <p className="text-muted-foreground">
             We couldn't find your creator profile
           </p>
-          {error && (
-            <p className="text-sm text-red-500">{error}</p>
-          )}
+          {error && <p className="text-sm text-red-500">{error}</p>}
           <div className="pt-4">
             <Link to="/creators">
-              <Button size="lg">
-                Register as Creator
-              </Button>
+              <Button size="lg">Register as Creator</Button>
             </Link>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
-  const tipLink = generateTipLink(creator.basename)
+  const tipLink = generateTipLink(creator.basename);
 
   const handleCopyLink = async () => {
-    const copied = await copyToClipboard(tipLink)
+    const copied = await copyToClipboard(tipLink);
     if (copied) {
-      toast.success('Profile link copied!')
+      toast.success("Profile link copied!");
     }
-  }
+  };
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -145,26 +152,28 @@ export function Dashboard() {
           title: `Tip ${creator.displayName}`,
           text: `Support ${creator.displayName} on TipChain!`,
           url: tipLink,
-        })
-        toast.success('Profile shared!')
+        });
+        toast.success("Profile shared!");
       } catch (err) {
-        console.log('Share cancelled:', err)
+        console.log("Share cancelled:", err);
       }
     } else {
-      handleCopyLink()
+      handleCopyLink();
     }
-  }
+  };
 
   const handleEditSuccess = () => {
-    toast.success('Refreshing your profile...')
+    toast.success("Refreshing your profile...");
     setTimeout(() => {
-      refetch()
-    }, 2000) // Wait 2s for blockchain to update
-  }
+      refetch();
+    }, 2000); // Wait 2s for blockchain to update
+  };
 
-  const totalAmountReceived = stats?.totalAmountReceived ? BigInt(stats.totalAmountReceived) : BigInt(0)
-  const tipCount = stats?.tipCount || 0
-  const averageTip = tipCount > 0 ? Number(totalAmountReceived) / tipCount : 0
+  const totalAmountReceived = stats?.totalAmountReceived
+    ? BigInt(stats.totalAmountReceived)
+    : BigInt(0);
+  const tipCount = stats?.tipCount || 0;
+  const averageTip = tipCount > 0 ? Number(totalAmountReceived) / tipCount : 0;
 
   return (
     <div className="container py-12">
@@ -198,16 +207,16 @@ export function Dashboard() {
         <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Received</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Received
+              </CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {formatEth(totalAmountReceived, 4)} CELO
               </div>
-              <p className="text-xs text-muted-foreground">
-                All-time earnings
-              </p>
+              <p className="text-xs text-muted-foreground">All-time earnings</p>
             </CardContent>
           </Card>
 
@@ -231,11 +240,12 @@ export function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {tipCount > 0 ? formatEth(BigInt(Math.floor(averageTip)), 4) : '0.00'} {}
+                {tipCount > 0
+                  ? formatEth(BigInt(Math.floor(averageTip)), 4)
+                  : "0.00"}{" "}
+                {}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Per tip
-              </p>
+              <p className="text-xs text-muted-foreground">Per tip</p>
             </CardContent>
           </Card>
         </div>
@@ -246,7 +256,8 @@ export function Dashboard() {
             <div>
               <CardTitle>Your Profile</CardTitle>
               <CardDescription>
-                Your creator information on {chainId && <NetworkBadge chainId={chainId} size="sm" />}
+                Your creator information on{" "}
+                {chainId && <NetworkBadge chainId={chainId} size="sm" />}
               </CardDescription>
             </div>
             <Button
@@ -261,28 +272,40 @@ export function Dashboard() {
           <CardContent className="space-y-4">
             <div className="flex items-center gap-4">
               <img
-                src={creator.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${creator.basename}`}
+                src={
+                  creator.avatarUrl ||
+                  `https://api.dicebear.com/7.x/avataaars/svg?seed=${creator.basename}`
+                }
                 alt={creator.displayName}
                 className="h-16 w-16 rounded-full"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${creator.basename}`
+                  (e.target as HTMLImageElement).src =
+                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${creator.basename}`;
                 }}
               />
               <div className="flex-1">
                 <h3 className="text-xl font-bold">{creator.displayName}</h3>
-                <p className="text-sm text-muted-foreground">@{creator.basename}</p>
-                <p className="text-xs text-muted-foreground">{shortenAddress(creator.address)}</p>
+                <p className="text-sm text-muted-foreground">
+                  @{creator.basename}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {shortenAddress(creator.address)}
+                </p>
               </div>
             </div>
             {creator.bio && (
               <p className="text-sm text-muted-foreground">{creator.bio}</p>
             )}
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>Registered {formatTimeAgo(Number(creator.registeredAt))}</span>
+              <span>
+                Registered {formatTimeAgo(Number(creator.registeredAt))}
+              </span>
               {creator.updatedAt !== creator.registeredAt && (
                 <>
                   <span>•</span>
-                  <span>Updated {formatTimeAgo(Number(creator.updatedAt))}</span>
+                  <span>
+                    Updated {formatTimeAgo(Number(creator.updatedAt))}
+                  </span>
                 </>
               )}
             </div>
@@ -322,9 +345,7 @@ export function Dashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Recent Tips</CardTitle>
-            <CardDescription>
-              Your latest tips from supporters
-            </CardDescription>
+            <CardDescription>Your latest tips from supporters</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -335,7 +356,9 @@ export function Dashboard() {
               <div className="text-center py-12 text-muted-foreground">
                 <Heart className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No tips received yet</p>
-                <p className="text-sm mt-2">Share your profile to start receiving tips!</p>
+                <p className="text-sm mt-2">
+                  Share your profile to start receiving tips!
+                </p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -347,7 +370,8 @@ export function Dashboard() {
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">
-                          {tip.from.displayName || shortenAddress(tip.from.address)}
+                          {tip.from.displayName ||
+                            shortenAddress(tip.from.address)}
                         </span>
                         <span className="text-sm text-muted-foreground">
                           tipped {formatEth(BigInt(tip.amount), 4)} {symbol}
@@ -425,5 +449,5 @@ export function Dashboard() {
         />
       )}
     </div>
-  )
+  );
 }

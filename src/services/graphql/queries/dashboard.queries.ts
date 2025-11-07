@@ -1,5 +1,5 @@
 // graphql/queries/explore.queries.ts
-import { gql } from 'graphql-request'
+import { gql } from "graphql-request";
 
 export const CREATOR_EXPLORE_FRAGMENT = gql`
   fragment CreatorExploreFragment on Creator {
@@ -17,7 +17,7 @@ export const CREATOR_EXPLORE_FRAGMENT = gql`
     tippedByCount
     isActive
   }
-`
+`;
 
 export const GET_ALL_CREATORS = gql`
   ${CREATOR_EXPLORE_FRAGMENT}
@@ -27,22 +27,17 @@ export const GET_ALL_CREATORS = gql`
     $orderBy: [Creator_order_by!]
     $where: Creator_bool_exp
   ) {
-    Creator(
-      limit: $limit
-      offset: $offset
-      order_by: $orderBy
-      where: $where
-    ) {
+    Creator(limit: $limit, offset: $offset, order_by: $orderBy, where: $where) {
       ...CreatorExploreFragment
     }
-    
+
     Creator_aggregate(where: $where) {
       aggregate {
         count
       }
     }
   }
-`
+`;
 
 export const SEARCH_CREATORS_ADVANCED = gql`
   ${CREATOR_EXPLORE_FRAGMENT}
@@ -68,7 +63,7 @@ export const SEARCH_CREATORS_ADVANCED = gql`
     ) {
       ...CreatorExploreFragment
     }
-    
+
     Creator_aggregate(
       where: {
         _or: [
@@ -85,16 +80,16 @@ export const SEARCH_CREATORS_ADVANCED = gql`
       }
     }
   }
-`
+`;
 
 export const GET_PLATFORM_STATS = gql`
   query GetPlatformStats {
-    Creator_aggregate(where: {isActive: {_eq: true}}) {
+    Creator_aggregate(where: { isActive: { _eq: true } }) {
       aggregate {
         count
       }
     }
-    
+
     Tip_aggregate {
       aggregate {
         count
@@ -103,11 +98,8 @@ export const GET_PLATFORM_STATS = gql`
         }
       }
     }
-    
-    DailyStats(
-      limit: 1
-      order_by: {date: desc}
-    ) {
+
+    DailyStats(limit: 1, order_by: { date: desc }) {
       totalTips
       totalVolume
       uniqueSenders
@@ -115,17 +107,17 @@ export const GET_PLATFORM_STATS = gql`
       activeCreators
     }
   }
-`
+`;
 
 export const GET_TOP_CREATORS = gql`
   ${CREATOR_EXPLORE_FRAGMENT}
   query GetTopCreators($limit: Int = 50) {
     Creator(
-      where: {isActive: {_eq: true}}
+      where: { isActive: { _eq: true } }
       limit: $limit
-      order_by: {totalAmountReceived: desc}
+      order_by: { totalAmountReceived: desc }
     ) {
       ...CreatorExploreFragment
     }
   }
-`
+`;

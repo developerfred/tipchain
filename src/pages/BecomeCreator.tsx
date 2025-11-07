@@ -1,11 +1,16 @@
-import { useState, useEffect } from 'react'
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi'
-import { useNavigate } from 'react-router-dom'
-import { 
-  Loader2, 
-  Check, 
-  AlertCircle, 
-  ArrowRight, 
+import { useState, useEffect } from "react";
+import {
+  useAccount,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useChainId,
+} from "wagmi";
+import { useNavigate } from "react-router-dom";
+import {
+  Loader2,
+  Check,
+  AlertCircle,
+  ArrowRight,
   ArrowLeft,
   User,
   Link as LinkIcon,
@@ -14,39 +19,50 @@ import {
   Zap,
   Users,
   CheckCircle,
-  Sparkles
-} from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card'
-import { Button } from '../components/ui/Button'
-import { TIPCHAIN_ABI, getTipChainContractAddress, isNetworkSupported, DEFAULT_CHAIN_ID } from '../config/contracts'
-import { isValidBasename } from '../lib/utils'
-import toast from 'react-hot-toast'
-import { useFarcaster } from '../providers/FarcasterProvider'
-import { SmartConnect } from '../components/SmartConnect'
+  Sparkles,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/Card";
+import { Button } from "../components/ui/Button";
+import {
+  TIPCHAIN_ABI,
+  getTipChainContractAddress,
+  isNetworkSupported,
+  DEFAULT_CHAIN_ID,
+} from "../config/contracts";
+import { isValidBasename } from "../lib/utils";
+import toast from "react-hot-toast";
+import { useFarcaster } from "../providers/FarcasterProvider";
+import { SmartConnect } from "../components/SmartConnect";
 
-// Componente de Input Moderno
-function ModernInput({ 
-  label, 
-  value, 
-  onChange, 
-  placeholder, 
-  error, 
+
+function ModernInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+  error,
   helperText,
   icon: Icon,
   type = "text",
   maxLength,
-  required = false
+  required = false,
 }: {
-  label: string
-  value: string
-  onChange: (value: string) => void
-  placeholder: string
-  error?: string
-  helperText?: string
-  icon?: any
-  type?: string
-  maxLength?: number
-  required?: boolean
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  error?: string;
+  helperText?: string;
+  icon?: any;
+  type?: string;
+  maxLength?: number;
+  required?: boolean;
 }) {
   return (
     <div className="space-y-3">
@@ -55,7 +71,7 @@ function ModernInput({
         {label}
         {required && <span className="text-red-400">*</span>}
       </label>
-      
+
       <div className="relative">
         <input
           type={type}
@@ -64,17 +80,21 @@ function ModernInput({
           placeholder={placeholder}
           maxLength={maxLength}
           className={`w-full px-4 py-3 rounded-xl border-2 bg-white/50 backdrop-blur-sm transition-all duration-200 ${
-            error 
-              ? 'border-red-300 focus:border-red-500' 
-              : 'border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
+            error
+              ? "border-red-300 focus:border-red-500"
+              : "border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
           } focus:outline-none focus:shadow-lg`}
         />
-        
+
         {maxLength && (
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
-            <span className={`text-xs ${
-              value.length > maxLength * 0.8 ? 'text-orange-500' : 'text-gray-400'
-            }`}>
+            <span
+              className={`text-xs ${
+                value.length > maxLength * 0.8
+                  ? "text-orange-500"
+                  : "text-gray-400"
+              }`}
+            >
               {value.length}/{maxLength}
             </span>
           </div>
@@ -87,18 +107,26 @@ function ModernInput({
           {error}
         </p>
       )}
-      
+
       {helperText && !error && (
         <p className="text-sm text-gray-500">{helperText}</p>
       )}
     </div>
-  )
+  );
 }
 
-// Componente de Preview do Perfil
-function ProfilePreview({ creator, isFarcaster = false }: { 
-  creator: { basename: string; displayName: string; bio: string; avatarUrl: string }
-  isFarcaster?: boolean 
+
+function ProfilePreview({
+  creator,
+  isFarcaster = false,
+}: {
+  creator: {
+    basename: string;
+    displayName: string;
+    bio: string;
+    avatarUrl: string;
+  };
+  isFarcaster?: boolean;
 }) {
   return (
     <div className="p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-100">
@@ -112,7 +140,7 @@ function ProfilePreview({ creator, isFarcaster = false }: {
             />
           ) : (
             <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-lg">
-              {creator.displayName[0]?.toUpperCase() || '?'}
+              {creator.displayName[0]?.toUpperCase() || "?"}
             </div>
           )}
           {isFarcaster && (
@@ -121,13 +149,13 @@ function ProfilePreview({ creator, isFarcaster = false }: {
             </div>
           )}
         </div>
-        
+
         <div className="flex-1 min-w-0">
           <h3 className="font-bold text-lg text-gray-900 truncate">
-            {creator.displayName || 'Your Name'}
+            {creator.displayName || "Your Name"}
           </h3>
           <p className="text-sm text-blue-600 font-mono truncate">
-            @{creator.basename || 'username'}.tipchain.eth
+            @{creator.basename || "username"}.tipchain.eth
           </p>
           {creator.bio && (
             <p className="text-sm text-gray-600 mt-2 line-clamp-2">
@@ -136,7 +164,7 @@ function ProfilePreview({ creator, isFarcaster = false }: {
           )}
         </div>
       </div>
-      
+
       {isFarcaster && (
         <div className="flex items-center gap-2 mt-3 text-sm text-purple-600">
           <CheckCircle className="h-4 w-4" />
@@ -144,22 +172,30 @@ function ProfilePreview({ creator, isFarcaster = false }: {
         </div>
       )}
     </div>
-  )
+  );
 }
 
-// Componente de Step Indicator
-function StepIndicator({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) {
+
+function StepIndicator({
+  currentStep,
+  totalSteps,
+}: {
+  currentStep: number;
+  totalSteps: number;
+}) {
   return (
     <div className="flex items-center justify-center space-x-4 mb-8">
       {Array.from({ length: totalSteps }).map((_, index) => (
         <div key={index} className="flex items-center">
-          <div className={`flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all duration-300 ${
-            index + 1 === currentStep
-              ? 'border-blue-500 bg-blue-500 text-white scale-110'
-              : index + 1 < currentStep
-              ? 'border-green-500 bg-green-500 text-white'
-              : 'border-gray-300 text-gray-400'
-          }`}>
+          <div
+            className={`flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all duration-300 ${
+              index + 1 === currentStep
+                ? "border-blue-500 bg-blue-500 text-white scale-110"
+                : index + 1 < currentStep
+                  ? "border-green-500 bg-green-500 text-white"
+                  : "border-gray-300 text-gray-400"
+            }`}
+          >
             {index + 1 < currentStep ? (
               <Check className="h-4 w-4" />
             ) : (
@@ -167,142 +203,156 @@ function StepIndicator({ currentStep, totalSteps }: { currentStep: number; total
             )}
           </div>
           {index < totalSteps - 1 && (
-            <div className={`h-0.5 w-12 transition-all duration-300 ${
-              index + 1 < currentStep ? 'bg-green-500' : 'bg-gray-300'
-            }`} />
+            <div
+              className={`h-0.5 w-12 transition-all duration-300 ${
+                index + 1 < currentStep ? "bg-green-500" : "bg-gray-300"
+              }`}
+            />
           )}
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 export function BecomeCreator() {
-  const { address, isConnected } = useAccount()
-  const chainId = useChainId()
-  const navigate = useNavigate()
-  const [currentStep, setCurrentStep] = useState(1)
-  const [isLoadingUser, setIsLoadingUser] = useState(false)
+  const { address, isConnected } = useAccount();
+  const chainId = useChainId();
+  const navigate = useNavigate();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isLoadingUser, setIsLoadingUser] = useState(false);
 
   const [formData, setFormData] = useState({
-    basename: '',
-    displayName: '',
-    bio: '',
-    avatarUrl: ''
-  })
-  const [basenameError, setBasenameError] = useState('')
+    basename: "",
+    displayName: "",
+    bio: "",
+    avatarUrl: "",
+  });
+  const [basenameError, setBasenameError] = useState("");
 
-  const { isMiniApp, user, isLoading: farcasterLoading, isInitialized } = useFarcaster()
-  
-  const effectiveChainId = chainId || DEFAULT_CHAIN_ID
-  const isSupportedNetwork = isNetworkSupported(effectiveChainId)
-  const contractAddress = getTipChainContractAddress(effectiveChainId)
+  const {
+    isMiniApp,
+    user,
+    isLoading: farcasterLoading,
+    isInitialized,
+  } = useFarcaster();
 
-  const { writeContract, data: hash, isPending } = useWriteContract()
+  const effectiveChainId = chainId || DEFAULT_CHAIN_ID;
+  const isSupportedNetwork = isNetworkSupported(effectiveChainId);
+  const contractAddress = getTipChainContractAddress(effectiveChainId);
+
+  const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
-  })
+  });
 
-  // Carregar dados do Farcaster
+
   useEffect(() => {
     const loadFarcasterUser = async () => {
       if (isMiniApp && user && !farcasterLoading && isInitialized) {
-        setIsLoadingUser(true)
+        setIsLoadingUser(true);
         try {
-          const generatedBasename = user.username.toLowerCase().replace(/[^a-z0-9-]/g, '')
-          
+          const generatedBasename = user.username
+            .toLowerCase()
+            .replace(/[^a-z0-9-]/g, "");
+
           setFormData({
             basename: generatedBasename,
             displayName: user.displayName || user.username,
-            bio: user.bio || '',
-            avatarUrl: user.pfpUrl || ''
-          })
+            bio: user.bio || "",
+            avatarUrl: user.pfpUrl || "",
+          });
 
-          validateBasename(generatedBasename)
-          toast.success('Perfil do Farcaster carregado! 🎉')
+          validateBasename(generatedBasename);
+          toast.success("Perfil do Farcaster carregado! 🎉");
         } catch (error) {
-          console.error('Error loading Farcaster user:', error)
-          toast.error('Could not load Farcaster profile')
+          console.error("Error loading Farcaster user:", error);
+          toast.error("Could not load Farcaster profile");
         } finally {
-          setIsLoadingUser(false)
+          setIsLoadingUser(false);
         }
       }
-    }
+    };
 
-    loadFarcasterUser()
-  }, [isMiniApp, user, farcasterLoading, isInitialized])
+    loadFarcasterUser();
+  }, [isMiniApp, user, farcasterLoading, isInitialized]);
 
   const validateBasename = (value: string) => {
     if (!value) {
-      setBasenameError('Basename is required')
-      return false
+      setBasenameError("Basename is required");
+      return false;
     }
     if (value.length < 3) {
-      setBasenameError('Basename must be at least 3 characters')
-      return false
+      setBasenameError("Basename must be at least 3 characters");
+      return false;
     }
     if (value.length > 30) {
-      setBasenameError('Basename must be less than 30 characters')
-      return false
+      setBasenameError("Basename must be less than 30 characters");
+      return false;
     }
     if (!isValidBasename(value)) {
-      setBasenameError('Only lowercase letters, numbers, and hyphens allowed')
-      return false
+      setBasenameError("Only lowercase letters, numbers, and hyphens allowed");
+      return false;
     }
-    setBasenameError('')
-    return true
-  }
+    setBasenameError("");
+    return true;
+  };
 
   const handleBasenameChange = (value: string) => {
-    const cleaned = value.toLowerCase().replace(/[^a-z0-9-]/g, '')
-    setFormData(prev => ({ ...prev, basename: cleaned }))
-    validateBasename(cleaned)
-  }
+    const cleaned = value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+    setFormData((prev) => ({ ...prev, basename: cleaned }));
+    validateBasename(cleaned);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!isConnected) {
-      toast.error('Please connect your wallet first')
-      return
+      toast.error("Please connect your wallet first");
+      return;
     }
 
     if (!isSupportedNetwork) {
-      toast.error('Please switch to a supported network')
-      return
+      toast.error("Please switch to a supported network");
+      return;
     }
 
     if (!validateBasename(formData.basename)) {
-      return
+      return;
     }
 
     if (!formData.displayName.trim()) {
-      toast.error('Display name is required')
-      return
+      toast.error("Display name is required");
+      return;
     }
 
     try {
       writeContract({
         address: contractAddress as `0x${string}`,
         abi: TIPCHAIN_ABI,
-        functionName: 'registerCreator',
-        args: [formData.basename, formData.displayName, formData.bio, formData.avatarUrl],
-      })
+        functionName: "registerCreator",
+        args: [
+          formData.basename,
+          formData.displayName,
+          formData.bio,
+          formData.avatarUrl,
+        ],
+      });
     } catch (error: any) {
-      console.error('Registration error:', error)
-      toast.error(error.message || 'Failed to register creator')
+      console.error("Registration error:", error);
+      toast.error(error.message || "Failed to register creator");
     }
-  }
+  };
 
   // Redirecionar após sucesso
   useEffect(() => {
     if (isSuccess) {
       setTimeout(() => {
-        toast.success('Successfully registered as a creator! 🎉')
-        navigate('/dashboard')
-      }, 2000)
+        toast.success("Successfully registered as a creator! 🎉");
+        navigate("/dashboard");
+      }, 2000);
     }
-  }, [isSuccess, navigate])
+  }, [isSuccess, navigate]);
 
   // Estados de conexão e rede
   if (!isConnected && !isMiniApp) {
@@ -323,7 +373,7 @@ export function BecomeCreator() {
           <SmartConnect />
         </div>
       </div>
-    )
+    );
   }
 
   if (!isSupportedNetwork) {
@@ -339,15 +389,16 @@ export function BecomeCreator() {
           <p className="text-gray-600">
             {isMiniApp
               ? "Base network is required for Farcaster integration"
-              : "Please switch to a supported network to register as a creator"
-            }
+              : "Please switch to a supported network to register as a creator"}
           </p>
           {isMiniApp && (
-            <Button 
-              onClick={() => window.ethereum?.request({
-                method: 'wallet_switchEthereumChain',
-                params: [{ chainId: '0x2105' }],
-              })}
+            <Button
+              onClick={() =>
+                window.ethereum?.request({
+                  method: "wallet_switchEthereumChain",
+                  params: [{ chainId: "0x2105" }],
+                })
+              }
               className="w-full"
             >
               Switch to Base
@@ -355,10 +406,10 @@ export function BecomeCreator() {
           )}
         </div>
       </div>
-    )
+    );
   }
 
-  // Conteúdo principal do formulário
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 py-8">
       <div className="max-w-2xl mx-auto p-4 space-y-8">
@@ -373,21 +424,20 @@ export function BecomeCreator() {
           <p className="text-lg text-gray-600 max-w-md mx-auto">
             {isMiniApp
               ? "Your Farcaster profile has been loaded. Review and complete your setup."
-              : "Set up your profile and start receiving tips in minutes"
-            }
+              : "Set up your profile and start receiving tips in minutes"}
           </p>
         </div>
 
-        {/* Step Indicator */}
         <StepIndicator currentStep={currentStep} totalSteps={3} />
 
-        {/* Form Content */}
         <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
           <CardContent className="p-8">
             {isLoadingUser ? (
               <div className="flex items-center justify-center py-12 space-x-3">
                 <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-                <span className="text-gray-600">Loading your Farcaster profile...</span>
+                <span className="text-gray-600">
+                  Loading your Farcaster profile...
+                </span>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-8">
@@ -395,8 +445,12 @@ export function BecomeCreator() {
                 {currentStep === 1 && (
                   <div className="space-y-6">
                     <div className="text-center space-y-2">
-                      <h2 className="text-2xl font-bold text-gray-900">Basic Information</h2>
-                      <p className="text-gray-600">Let's start with your profile details</p>
+                      <h2 className="text-2xl font-bold text-gray-900">
+                        Basic Information
+                      </h2>
+                      <p className="text-gray-600">
+                        Let's start with your profile details
+                      </p>
                     </div>
 
                     <ModernInput
@@ -413,7 +467,9 @@ export function BecomeCreator() {
                     <ModernInput
                       label="Display Name"
                       value={formData.displayName}
-                      onChange={(value) => setFormData(prev => ({ ...prev, displayName: value }))}
+                      onChange={(value) =>
+                        setFormData((prev) => ({ ...prev, displayName: value }))
+                      }
                       placeholder="Your Public Name"
                       helperText="How supporters will see you"
                       icon={FileText}
@@ -421,11 +477,10 @@ export function BecomeCreator() {
                       required
                     />
 
-                    {/* Preview */}
                     {(formData.basename || formData.displayName) && (
-                      <ProfilePreview 
-                        creator={formData} 
-                        isFarcaster={isMiniApp} 
+                      <ProfilePreview
+                        creator={formData}
+                        isFarcaster={isMiniApp}
                       />
                     )}
 
@@ -434,7 +489,7 @@ export function BecomeCreator() {
                         type="button"
                         variant="outline"
                         className="flex-1 py-3"
-                        onClick={() => navigate('/')}
+                        onClick={() => navigate("/")}
                       >
                         Cancel
                       </Button>
@@ -442,13 +497,20 @@ export function BecomeCreator() {
                         type="button"
                         className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
                         onClick={() => {
-                          if (validateBasename(formData.basename) && formData.displayName.trim()) {
-                            setCurrentStep(2)
+                          if (
+                            validateBasename(formData.basename) &&
+                            formData.displayName.trim()
+                          ) {
+                            setCurrentStep(2);
                           } else {
-                            toast.error('Please fill in all required fields')
+                            toast.error("Please fill in all required fields");
                           }
                         }}
-                        disabled={!formData.basename || !formData.displayName || !!basenameError}
+                        disabled={
+                          !formData.basename ||
+                          !formData.displayName ||
+                          !!basenameError
+                        }
                       >
                         Continue
                         <ArrowRight className="ml-2 h-4 w-4" />
@@ -456,19 +518,24 @@ export function BecomeCreator() {
                     </div>
                   </div>
                 )}
-
-                {/* Step 2: Additional Details */}
+               
                 {currentStep === 2 && (
                   <div className="space-y-6">
                     <div className="text-center space-y-2">
-                      <h2 className="text-2xl font-bold text-gray-900">Additional Details</h2>
-                      <p className="text-gray-600">Tell supporters more about yourself</p>
+                      <h2 className="text-2xl font-bold text-gray-900">
+                        Additional Details
+                      </h2>
+                      <p className="text-gray-600">
+                        Tell supporters more about yourself
+                      </p>
                     </div>
 
                     <ModernInput
                       label="Bio"
                       value={formData.bio}
-                      onChange={(value) => setFormData(prev => ({ ...prev, bio: value }))}
+                      onChange={(value) =>
+                        setFormData((prev) => ({ ...prev, bio: value }))
+                      }
                       placeholder="Tell your story..."
                       helperText="What makes you unique?"
                       icon={FileText}
@@ -478,14 +545,19 @@ export function BecomeCreator() {
                     <ModernInput
                       label="Avatar URL"
                       value={formData.avatarUrl}
-                      onChange={(value) => setFormData(prev => ({ ...prev, avatarUrl: value }))}
+                      onChange={(value) =>
+                        setFormData((prev) => ({ ...prev, avatarUrl: value }))
+                      }
                       placeholder="https://example.com/avatar.jpg"
                       helperText="Link to your profile picture"
                       icon={LinkIcon}
                       type="url"
                     />
 
-                    <ProfilePreview creator={formData} isFarcaster={isMiniApp} />
+                    <ProfilePreview
+                      creator={formData}
+                      isFarcaster={isMiniApp}
+                    />
 
                     <div className="flex gap-3 pt-4">
                       <Button
@@ -508,16 +580,22 @@ export function BecomeCreator() {
                     </div>
                   </div>
                 )}
-
-                {/* Step 3: Review & Submit */}
+                
                 {currentStep === 3 && (
                   <div className="space-y-6">
                     <div className="text-center space-y-2">
-                      <h2 className="text-2xl font-bold text-gray-900">Review & Create</h2>
-                      <p className="text-gray-600">Almost there! Review your profile</p>
+                      <h2 className="text-2xl font-bold text-gray-900">
+                        Review & Create
+                      </h2>
+                      <p className="text-gray-600">
+                        Almost there! Review your profile
+                      </p>
                     </div>
 
-                    <ProfilePreview creator={formData} isFarcaster={isMiniApp} />
+                    <ProfilePreview
+                      creator={formData}
+                      isFarcaster={isMiniApp}
+                    />
 
                     {/* Important Info */}
                     <div className="p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200 space-y-4">
@@ -535,8 +613,8 @@ export function BecomeCreator() {
                           You can update other profile details anytime
                         </li>
                         <li className="flex items-center gap-2">
-                          <Zap className="h-4 w-4 text-yellow-500" />
-                          A small gas fee is required for registration
+                          <Zap className="h-4 w-4 text-yellow-500" />A small gas
+                          fee is required for registration
                         </li>
                         {isMiniApp && (
                           <li className="flex items-center gap-2">
@@ -578,7 +656,7 @@ export function BecomeCreator() {
                         {isPending || isConfirming ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            {isPending ? 'Confirming...' : 'Processing...'}
+                            {isPending ? "Confirming..." : "Processing..."}
                           </>
                         ) : isSuccess ? (
                           <>
@@ -600,34 +678,41 @@ export function BecomeCreator() {
           </CardContent>
         </Card>
 
-        {/* Benefits Cards */}
+
         <div className="grid gap-6 md:grid-cols-3">
           {[
             {
               icon: Zap,
               title: "Instant Setup",
               description: "Get started in minutes with zero complexity",
-              color: "from-yellow-500 to-orange-500"
+              color: "from-yellow-500 to-orange-500",
             },
             {
               icon: Users,
               title: "Global Reach",
               description: "Accept tips from supporters worldwide",
-              color: "from-blue-500 to-cyan-500"
+              color: "from-blue-500 to-cyan-500",
             },
             {
               icon: Shield,
               title: "Secure & Safe",
               description: "Built on blockchain for maximum security",
-              color: "from-green-500 to-emerald-500"
-            }
+              color: "from-green-500 to-emerald-500",
+            },
           ].map((benefit, index) => (
-            <Card key={index} className="border-0 bg-white/60 backdrop-blur-sm text-center">
+            <Card
+              key={index}
+              className="border-0 bg-white/60 backdrop-blur-sm text-center"
+            >
               <CardContent className="p-6">
-                <div className={`w-12 h-12 mx-auto mb-4 bg-gradient-to-r ${benefit.color} rounded-xl flex items-center justify-center`}>
+                <div
+                  className={`w-12 h-12 mx-auto mb-4 bg-gradient-to-r ${benefit.color} rounded-xl flex items-center justify-center`}
+                >
                   <benefit.icon className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">{benefit.title}</h3>
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  {benefit.title}
+                </h3>
                 <p className="text-sm text-gray-600">{benefit.description}</p>
               </CardContent>
             </Card>
@@ -635,5 +720,5 @@ export function BecomeCreator() {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -5,10 +5,10 @@
 @tailwind utilities;
 
 @layer base {
- * {
+  * {
     @apply border-border outline-ring/50;
   }
-  
+
   html {
     @apply h-full;
   }
@@ -37,9 +37,11 @@
     @apply h-full flex flex-col;
   }
 
-    body {
+  body {
     @apply bg-background text-foreground h-full m-0 p-0;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
     /* Support for safe areas in mini apps */
     padding-top: var(--miniapp-safe-area-top);
     padding-bottom: var(--miniapp-safe-area-bottom);
@@ -76,7 +78,9 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
   }
 }
 
@@ -330,20 +334,20 @@
     @apply ml-[-50px] mt-[-4px];
     content: counter(step);
   }
-  
+
   /* Flex utilities */
   .flex-center {
     @apply flex items-center justify-center;
   }
-  
+
   .flex-between {
     @apply flex items-center justify-between;
   }
-  
+
   .flex-start {
     @apply flex items-center justify-start;
   }
-  
+
   .flex-end {
     @apply flex items-center justify-end;
   }
@@ -450,27 +454,27 @@
   .text-responsive-xs {
     @apply text-xs sm:text-sm;
   }
-  
+
   .text-responsive-sm {
     @apply text-sm sm:text-base;
   }
-  
+
   .text-responsive-base {
     @apply text-base sm:text-lg;
   }
-  
+
   .text-responsive-lg {
     @apply text-lg sm:text-xl;
   }
-  
+
   .text-responsive-xl {
     @apply text-xl sm:text-2xl md:text-3xl;
   }
-  
+
   .text-responsive-2xl {
     @apply text-2xl sm:text-3xl md:text-4xl;
   }
-  
+
   .text-responsive-3xl {
     @apply text-3xl sm:text-4xl md:text-5xl;
   }
@@ -481,29 +485,29 @@
   .pt-safe {
     padding-top: var(--miniapp-safe-area-top);
   }
-  
+
   .pb-safe {
     padding-bottom: var(--miniapp-safe-area-bottom);
   }
-  
+
   .pl-safe {
     padding-left: var(--miniapp-safe-area-left);
   }
-  
+
   .pr-safe {
     padding-right: var(--miniapp-safe-area-right);
   }
-  
+
   .px-safe {
     padding-left: var(--miniapp-safe-area-left);
     padding-right: var(--miniapp-safe-area-right);
   }
-  
+
   .py-safe {
     padding-top: var(--miniapp-safe-area-top);
     padding-bottom: var(--miniapp-safe-area-bottom);
   }
-  
+
   .p-safe {
     padding-top: var(--miniapp-safe-area-top);
     padding-bottom: var(--miniapp-safe-area-bottom);

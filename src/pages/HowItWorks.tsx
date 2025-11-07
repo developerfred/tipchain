@@ -1,19 +1,24 @@
-import { Link } from 'react-router-dom'
-import { 
-  Wallet, 
-  Search, 
-  Send, 
-  CheckCircle, 
-  Zap, 
-  Shield, 
+import { Link } from "react-router-dom";
+import {
+  Wallet,
+  Search,
+  Send,
+  CheckCircle,
+  Zap,
+  Shield,
   Globe,
   ArrowRight,
   Coins,
   Users,
-  Heart
-} from 'lucide-react'
-import { Button } from '../components/ui/Button'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
+  Heart,
+} from "lucide-react";
+import { Button } from "../components/ui/Button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/Card";
 
 export function HowItWorks() {
   return (
@@ -25,8 +30,8 @@ export function HowItWorks() {
             How TipChain Works
           </h1>
           <p className="text-xl text-muted-foreground">
-            Supporting creators has never been easier. 
-            No wallets, no gas fees, no complexity.
+            Supporting creators has never been easier. No wallets, no gas fees,
+            no complexity.
           </p>
         </div>
       </section>
@@ -59,7 +64,7 @@ export function HowItWorks() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4">
-                    Connect with email, Google, or your favorite social account. 
+                    Connect with email, Google, or your favorite social account.
                     No crypto wallet or seed phrases required.
                   </p>
                   <ul className="space-y-2 text-sm">
@@ -95,8 +100,8 @@ export function HowItWorks() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4">
-                    Browse creators or use a direct link. 
-                    Scan a QR code or search by username.
+                    Browse creators or use a direct link. Scan a QR code or
+                    search by username.
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
@@ -131,8 +136,8 @@ export function HowItWorks() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4">
-                    Choose an amount, add a message, and send. 
-                    Pay with card, crypto, or any token.
+                    Choose an amount, add a message, and send. Pay with card,
+                    crypto, or any token.
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
@@ -188,7 +193,8 @@ export function HowItWorks() {
             </CardHeader>
             <CardContent className="ml-16">
               <p className="text-muted-foreground mb-4">
-                Register with your basename (username.base.eth) and set up your profile in less than 2 minutes.
+                Register with your basename (username.base.eth) and set up your
+                profile in less than 2 minutes.
               </p>
               <div className="flex gap-2">
                 <Link to="/creators">
@@ -212,7 +218,8 @@ export function HowItWorks() {
             </CardHeader>
             <CardContent className="ml-16">
               <p className="text-muted-foreground mb-4">
-                Get your unique profile link and QR code. Share it on social media, your website, or anywhere you engage with your audience.
+                Get your unique profile link and QR code. Share it on social
+                media, your website, or anywhere you engage with your audience.
               </p>
               <div className="p-4 border rounded-lg bg-muted/50 font-mono text-sm">
                 tipchain.app/tip/yourname
@@ -231,7 +238,8 @@ export function HowItWorks() {
             </CardHeader>
             <CardContent className="ml-16">
               <p className="text-muted-foreground mb-4">
-                Accept tips in ETH, stablecoins, or any token. Tips are sent directly to your wallet with a small 2.5% platform fee.
+                Accept tips in ETH, stablecoins, or any token. Tips are sent
+                directly to your wallet with a small 2.5% platform fee.
               </p>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-start gap-2">
@@ -269,7 +277,8 @@ export function HowItWorks() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                We sponsor gas fees for all users, making it completely free to send and receive tips.
+                We sponsor gas fees for all users, making it completely free to
+                send and receive tips.
               </p>
             </CardContent>
           </Card>
@@ -281,7 +290,8 @@ export function HowItWorks() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Send and receive tips on Base, Ethereum, Solana, Bitcoin, and more. One platform, any chain.
+                Send and receive tips on Base, Ethereum, Solana, Bitcoin, and
+                more. One platform, any chain.
               </p>
             </CardContent>
           </Card>
@@ -293,7 +303,8 @@ export function HowItWorks() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Built on Base L2 with Coinbase Smart Wallets. Your funds are always secure and under your control.
+                Built on Base L2 with Coinbase Smart Wallets. Your funds are
+                always secure and under your control.
               </p>
             </CardContent>
           </Card>
@@ -305,7 +316,8 @@ export function HowItWorks() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Login with email or social accounts. Smart wallets are created automatically in the background.
+                Login with email or social accounts. Smart wallets are created
+                automatically in the background.
               </p>
             </CardContent>
           </Card>
@@ -317,7 +329,8 @@ export function HowItWorks() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Built-in token swapping. Send any token and creators receive it in their preferred currency.
+                Built-in token swapping. Send any token and creators receive it
+                in their preferred currency.
               </p>
             </CardContent>
           </Card>
@@ -329,7 +342,8 @@ export function HowItWorks() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Get your own username.base.eth identity. Easy to remember, easy to share.
+                Get your own username.base.eth identity. Easy to remember, easy
+                to share.
               </p>
             </CardContent>
           </Card>
@@ -339,18 +353,23 @@ export function HowItWorks() {
       {/* FAQ Section */}
       <section className="container py-24">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
+          <h2 className="text-3xl font-bold mb-4">
+            Frequently Asked Questions
+          </h2>
         </div>
 
         <div className="max-w-3xl mx-auto space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Do I need a crypto wallet to use TipChain?</CardTitle>
+              <CardTitle className="text-lg">
+                Do I need a crypto wallet to use TipChain?
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                No! You can login with email or social accounts. A smart wallet will be created for you automatically. 
-                If you already have a wallet, you can connect it directly.
+                No! You can login with email or social accounts. A smart wallet
+                will be created for you automatically. If you already have a
+                wallet, you can connect it directly.
               </p>
             </CardContent>
           </Card>
@@ -361,30 +380,37 @@ export function HowItWorks() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                TipChain charges a 2.5% platform fee on all tips. Gas fees are sponsored by us, so you never pay for transactions.
+                TipChain charges a 2.5% platform fee on all tips. Gas fees are
+                sponsored by us, so you never pay for transactions.
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">What cryptocurrencies are supported?</CardTitle>
+              <CardTitle className="text-lg">
+                What cryptocurrencies are supported?
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                TipChain supports ETH, USDC, and other ERC-20 tokens on Base, Ethereum, and other EVM chains. 
-                We also support Solana and Bitcoin through our multi-chain infrastructure.
+                TipChain supports ETH, USDC, and other ERC-20 tokens on Base,
+                Ethereum, and other EVM chains. We also support Solana and
+                Bitcoin through our multi-chain infrastructure.
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">How do I withdraw my tips?</CardTitle>
+              <CardTitle className="text-lg">
+                How do I withdraw my tips?
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Tips are sent directly to your wallet. You have full control and can withdraw or transfer your funds anytime using your wallet.
+                Tips are sent directly to your wallet. You have full control and
+                can withdraw or transfer your funds anytime using your wallet.
               </p>
             </CardContent>
           </Card>
@@ -395,8 +421,9 @@ export function HowItWorks() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Yes! TipChain is built on Base L2 (an Ethereum Layer 2) and uses Coinbase Smart Wallets. 
-                All smart contracts are audited and your funds are always under your control.
+                Yes! TipChain is built on Base L2 (an Ethereum Layer 2) and uses
+                Coinbase Smart Wallets. All smart contracts are audited and your
+                funds are always under your control.
               </p>
             </CardContent>
           </Card>
@@ -420,9 +447,9 @@ export function HowItWorks() {
               </Button>
             </Link>
             <Link to="/explore">
-              <Button 
-                size="xl" 
-                variant="outline" 
+              <Button
+                size="xl"
+                variant="outline"
                 className="bg-transparent text-white border-white hover:bg-white hover:text-purple-600"
               >
                 Explore Creators
@@ -432,5 +459,5 @@ export function HowItWorks() {
         </div>
       </section>
     </div>
-  )
+  );
 }
