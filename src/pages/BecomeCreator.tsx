@@ -205,8 +205,7 @@ if (!isSupportedNetwork) {
                         </div>
                     </div>
                 </div>
-            </div>
-            </div>
+            </div>            
         )
     }
 
