@@ -24,9 +24,8 @@ export function BecomeCreator() {
     const [bio, setBio] = useState('')
     const [avatarUrl, setAvatarUrl] = useState('')
     const [basenameError, setBasenameError] = useState('')
-    const { isMiniApp, user, isLoading: farcasterLoading } = useFarcaster()
-
-    // Usar Base como default chain para Farcaster
+    const { isMiniApp, user, isLoading: farcasterLoading, isInitialized } = useFarcaster()
+    
     const effectiveChainId = chainId || DEFAULT_CHAIN_ID
     const isSupportedNetwork = isNetworkSupported(effectiveChainId)
     const contractAddress = getTipChainContractAddress(effectiveChainId)
@@ -35,18 +34,17 @@ export function BecomeCreator() {
     const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
         hash,
     })
-
-    // Carregar dados do usuário do Farcaster
+    
     useEffect(() => {
         const loadFarcasterUser = async () => {
-            if (isMiniApp && user && !farcasterLoading) {
+            if (isMiniApp && user && !farcasterLoading && isInitialized) {
                 setIsLoadingUser(true)
                 try {
                     setDisplayName(user.displayName || user.username)
                     setBio(user.bio || '')
                     setAvatarUrl(user.pfpUrl || '')
 
-                    // Gerar basename a partir do username
+                    
                     const generatedBasename = user.username.toLowerCase().replace(/[^a-z0-9-]/g, '')
                     setBasename(generatedBasename)
                     validateBasename(generatedBasename)
@@ -133,8 +131,62 @@ export function BecomeCreator() {
         }, 2000)
     }
 
+    const shouldShowConnect = !isConnected && !isMiniApp
+    if (shouldShowConnect) {
+            return (
+                <div className= "min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-900/20" >
+                <div className="container py-16" >
+                    <div className="max-w-4xl mx-auto" >
+                        <div className="text-center mb-16" >
+                            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-br from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4" >
+                                Join TipChain
+                                    </h1>
+                                    < p className = "text-xl text-muted-foreground max-w-2xl mx-auto mb-8" >
+                                        Connect your wallet to start receiving tips from your community
+                                            </p>
+                                            < div className = "flex justify-center" >
+                                                <SmartConnect />
+                                                </div>
+                                                </div>
+                                                </div>
+                                                </div>
+                                                </div>
+            )
+        }
     
-    const isFarcasterMiniApp = typeof window !== 'undefined' && !!window.fc?.miniapp
+
+if (!isSupportedNetwork) {
+        return (
+            <div className= "container py-24" >
+            <div className="max-w-md mx-auto text-center space-y-6" >
+                <div className="text-6xl" >🌐</div>
+                    < h1 className = "text-3xl font-bold" >
+                        { isMiniApp? "Switch to Base": "Unsupported Network" }
+                        </h1>
+                        < p className = "text-muted-foreground" >
+                        {
+                            isMiniApp
+                            ? "Base network is required for Farcaster integration"
+                                : "Please switch to a supported network to register as a creator"
+                        }
+                            </p>
+        {
+            isMiniApp && (
+                <Button onClick={
+                    () => window.ethereum?.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: '0x2105' }], // Base Mainnet
+                    })
+            }>
+                Switch to Base
+                    </Button>
+                    )
+        }
+        </div>
+            </div>
+        )
+    }
+ 
 
     if (!isConnected && !isMiniApp) {
         return (
@@ -164,15 +216,15 @@ export function BecomeCreator() {
                 <div className="max-w-md mx-auto text-center space-y-6">
                     <div className="text-6xl">🌐</div>
                     <h1 className="text-3xl font-bold">
-                        {isFarcasterMiniApp ? "Switch to Base" : "Unsupported Network"}
+                        {isMiniApp ? "Switch to Base" : "Unsupported Network"}
                     </h1>
                     <p className="text-muted-foreground">
-                        {isFarcasterMiniApp
+                        {isMiniApp
                             ? "Base network is required for Farcaster integration"
                             : "Please switch to a supported network to register as a creator"
                         }
                     </p>
-                    {isFarcasterMiniApp && (
+                    {isMiniApp && (
                         <Button onClick={() => window.ethereum?.request({
                             method: 'wallet_switchEthereumChain',
                             params: [{ chainId: '0x2105' }], 
@@ -190,16 +242,16 @@ export function BecomeCreator() {
             <div className="max-w-3xl mx-auto space-y-8">
                 <div className="text-center space-y-4">
                     <h1 className="text-4xl font-bold">
-                        {isFarcasterMiniApp ? "Welcome Creator! 🎉" : "Become a Creator"}
+                        {isMiniApp ? "Welcome Creator! 🎉" : "Become a Creator"}
                     </h1>
                     <p className="text-lg text-muted-foreground">
-                        {isFarcasterMiniApp
+                        {isMiniApp
                             ? "Your Farcaster profile has been loaded. Review and complete your TipChain setup."
                             : "Set up your profile and start receiving tips from your supporters"
                         }
                     </p>
 
-                    {isFarcasterMiniApp && (
+                    {isMiniApp && (
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full">
                             <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                             <span className="text-sm text-blue-600">Connected to Farcaster</span>
@@ -214,7 +266,7 @@ export function BecomeCreator() {
                             {step > 1 ? <Check className="h-5 w-5" /> : '1'}
                         </div>
                         <span className="ml-2 hidden sm:inline">
-                            {isFarcasterMiniApp ? 'Profile Review' : 'Profile Info'}
+                            {isMiniApp ? 'Profile Review' : 'Profile Info'}
                         </span>
                     </div>
                     <div className="h-0.5 w-12 bg-border"></div>
@@ -230,13 +282,13 @@ export function BecomeCreator() {
                     <CardHeader>
                         <CardTitle>
                             {step === 1
-                                ? (isFarcasterMiniApp ? 'Review Your Profile' : 'Profile Information')
+                                ? (isMiniApp ? 'Review Your Profile' : 'Profile Information')
                                 : 'Review & Confirm'
                             }
                         </CardTitle>
                         <CardDescription>
                             {step === 1
-                                ? (isFarcasterMiniApp
+                                ? (isMiniApp
                                     ? 'Your Farcaster profile has been pre-filled. Make any changes if needed.'
                                     : 'Fill in your creator profile details'
                                 )
@@ -403,7 +455,7 @@ export function BecomeCreator() {
                                                     <div className="flex-1">
                                                         <h3 className="text-xl font-bold">{displayName}</h3>
                                                         <p className="text-muted-foreground">@{basename}.tipchain.eth</p>
-                                                        {isFarcasterMiniApp && (
+                                                        {isMiniApp && (
                                                             <p className="text-sm text-green-600">✓ Connected to Farcaster</p>
                                                         )}
                                                     </div>
@@ -427,7 +479,7 @@ export function BecomeCreator() {
                                                     <li>You can update your display name, bio, and avatar later</li>
                                                     <li>A small gas fee will be required for registration</li>
                                                     <li>Your profile will be public and searchable</li>
-                                                    {isFarcasterMiniApp && (
+                                                    {isMiniApp && (
                                                         <li>Your Farcaster followers can easily find and tip you</li>
                                                     )}
                                                 </ul>

@@ -34,28 +34,31 @@ export function FarcasterProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         const initializeFarcaster = async () => {
-            try {
-                // Verificar se estamos no Farcaster
+            try {                
                 const inMiniApp = await sdk.isInMiniApp()
                 console.log('📱 Farcaster Mini App detected:', inMiniApp)
                 setIsMiniApp(inMiniApp)
 
-                if (inMiniApp) {
-                    // Inicializar SDK
+                if (inMiniApp) {                   
                     await sdk.actions.ready()
-
-                    try {
-                        // Tentar obter dados do usuário
-                        const userData = await sdk.user.get()
-                        setUser(userData)
-                        console.log('👤 Farcaster user data:', userData)
+                    
+                    try {                        
+                        const context = await sdk.context
+                        if (context.user) {
+                            setUser({
+                                fid: context.user.fid,
+                                username: context.user.username || '',
+                                displayName: context.user.displayName || context.user.username || '',
+                                pfpUrl: context.user.pfpUrl || '',
+                                bio: context.user.bio || ''
+                            })
+                        }
+                        console.log('👤 Farcaster context:', context)
                     } catch (userError) {
-                        console.log('⚠️ Could not fetch Farcaster user data:', userError)
-                        // Não é um erro crítico, podemos continuar
+                        console.log('⚠️ Could not fetch Farcaster user data:', userError)                        
                     }
                 }
-            } catch (error) {
-                console.log('❌ Farcaster initialization failed:', error)
+            } catch (error) {                
                 setError('Failed to initialize Farcaster SDK')
                 setIsMiniApp(false)
             } finally {
@@ -68,12 +71,12 @@ export function FarcasterProvider({ children }: { children: React.ReactNode }) {
     }, [])
 
     return (
-        <FarcasterContext.Provider value={{
-            isMiniApp,
-            user,
-            isLoading,
+        <FarcasterContext.Provider value={{ 
+            isMiniApp, 
+            user, 
+            isLoading, 
             error,
-            isInitialized
+            isInitialized 
         }}>
             {children}
         </FarcasterContext.Provider>

@@ -12,33 +12,33 @@ export function AppProviders({ children }: AppProvidersProps) {
     return (
         <WagmiProvider config={config}>
             <QueryClientProvider client={queryClient}>
-                <FarcasterProvider> 
-                {children}
-                <Toaster
-                    position="top-right"
-                    toastOptions={{
-                        duration: 4000,
-                        style: {
-                            background: '#363636',
-                            color: '#fff',
-                        },
-                        success: {
-                            duration: 3000,
-                            iconTheme: {
-                                primary: '#10b981',
-                                secondary: '#fff',
-                            },
-                        },
-                        error: {
+                <FarcasterProvider>
+                    {children}
+                    <Toaster
+                        position="top-right"
+                        toastOptions={{
                             duration: 4000,
-                            iconTheme: {
-                                primary: '#ef4444',
-                                secondary: '#fff',
+                            style: {
+                                background: '#363636',
+                                color: '#fff',
                             },
-                        },
-                    }}
-                />
-                    </FarcasterProvider> 
+                            success: {
+                                duration: 3000,
+                                iconTheme: {
+                                    primary: '#10b981',
+                                    secondary: '#fff',
+                                },
+                            },
+                            error: {
+                                duration: 4000,
+                                iconTheme: {
+                                    primary: '#ef4444',
+                                    secondary: '#fff',
+                                },
+                            },
+                        }}
+                    />
+                </FarcasterProvider>
             </QueryClientProvider>
         </WagmiProvider>
     )
