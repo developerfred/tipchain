@@ -1,12 +1,12 @@
 import { z } from "zod";
 
 export const CreatorSchema = z.object({
-  address: z.string().min(1, "Endereço do criador é obrigatório"),
-  basename: z.string().min(1, "Basename é obrigatório"),
-  displayName: z.string().min(1, "Nome de exibição é obrigatório"),
+  address: z.string().min(1, "Creator address is required"),
+  basename: z.string().min(1, "Basename is required"),
+  displayName: z.string().min(1, "Display name is required"),
   avatarUrl: z
     .string()
-    .url("URL do avatar deve ser válida")
+    .url("Avatar URL must be valid")
     .optional()
     .or(z.literal("")),
 });
@@ -23,16 +23,16 @@ export const TokenSchema = z.object({
 export const TipFormSchema = z.object({
   amount: z
     .string()
-    .min(1, "Valor é obrigatório")
+    .min(1, "Amount is required")
     .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
-      message: "Valor deve ser maior que 0",
+      message: "Amount must be greater than 0",
     }),
   message: z
     .string()
-    .max(200, "Mensagem deve ter no máximo 200 caracteres")
+    .max(200, "Message must not exceed 200 characters")
     .optional(),
   selectedToken: TokenSchema.nullable().refine((val) => val !== null, {
-    message: "Selecione um token",
+    message: "Please select a token",
   }),
   customAmount: z.boolean(),
 });
