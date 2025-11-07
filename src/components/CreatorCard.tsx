@@ -88,7 +88,6 @@ export function CreatorCard({ creator }: CreatorCardProps) {
     <>
       <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 group cursor-pointer border-0 bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-700/50">
         <CardContent className="p-0">
-          {/* Header com badges */}
           <div className="relative h-24 bg-gradient-to-br from-blue-500 to-purple-600">
             <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2">
               <div className="relative">
@@ -98,7 +97,6 @@ export function CreatorCard({ creator }: CreatorCardProps) {
                   className="w-12 h-12 rounded-xl border-4 border-white bg-white group-hover:scale-110 transition-transform shadow-lg"
                 />
 
-                {/* Badge de status */}
                 {!isRegistered && (
                   <div className="absolute -top-1 -right-1 bg-yellow-500 rounded-full p-1 border-2 border-white">
                     <Zap className="h-2 w-2 text-white" />
@@ -117,7 +115,6 @@ export function CreatorCard({ creator }: CreatorCardProps) {
               </div>
             </div>
 
-            {/* Badges no topo */}
             <div className="absolute top-3 right-3 flex gap-1">
               {hasBuilderScore && (
                 <div className="bg-green-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
@@ -133,7 +130,6 @@ export function CreatorCard({ creator }: CreatorCardProps) {
             </div>
           </div>
 
-          {/* Content */}
           <div className="pt-8 px-4 pb-4">
             <div className="text-center mb-3">
               <h3 className="font-bold text-lg group-hover:text-blue-600 transition-colors line-clamp-1">

@@ -263,7 +263,6 @@ export function Landing() {
         </div>
       </section>
 
-      {/* Top Creators Compact Carousel */}
       {topCreators.length > 0 && (
         <section className="py-16 bg-white dark:bg-gray-900 border-y">
           <div className="container">

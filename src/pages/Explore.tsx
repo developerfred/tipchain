@@ -66,7 +66,6 @@ export function Explore() {
     onlyActive: true,
   });
 
-  
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (localSearch !== searchQuery) {
@@ -81,7 +80,6 @@ export function Explore() {
     return () => clearTimeout(timeoutId);
   }, [localSearch]);
 
-  
   useEffect(() => {
     if (error) {
       toast.error(error);
@@ -122,7 +120,6 @@ export function Explore() {
       };
     }
 
-    
     const totalTips = creators.reduce((sum, c) => sum + (c.tipCount || 0), 0);
     const totalVolume = creators.reduce((sum, c) => {
       const amount = c.totalAmountReceived
@@ -162,7 +159,6 @@ export function Explore() {
         </p>
       </div>
 
-      
       <div className="grid gap-4 md:grid-cols-3 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -201,7 +197,7 @@ export function Explore() {
           </CardContent>
         </Card>
       </div>
-      
+
       <div className="mb-8 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
@@ -307,7 +303,6 @@ export function Explore() {
         )}
       </div>
 
-     
       {isLoading && creators.length === 0 && (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -317,7 +312,6 @@ export function Explore() {
         </div>
       )}
 
-   
       {error && !isLoading && (
         <div className="text-center py-12 space-y-4">
           <div className="text-6xl">⚠️</div>
@@ -346,7 +340,6 @@ export function Explore() {
         </div>
       )}
 
-      
       {!isLoading && creators.length > 0 && (
         <>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -355,7 +348,6 @@ export function Explore() {
             ))}
           </div>
 
-          
           {hasMore && (
             <div className="text-center mt-8">
               <Button
@@ -378,7 +370,6 @@ export function Explore() {
         </>
       )}
 
-      
       <div className="mt-16 text-center space-y-4">
         <h2 className="text-2xl font-bold">Are you a creator?</h2>
         <p className="text-muted-foreground max-w-md mx-auto">
