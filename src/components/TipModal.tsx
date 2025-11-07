@@ -1,5 +1,6 @@
+// components/TipModal.tsx
 import { useState, useEffect } from 'react'
-import { X, Heart, DollarSign, Loader2, ChevronDown, Check, AlertCircle } from 'lucide-react'
+import { X, Heart, DollarSign, Loader2, ChevronDown, Check, AlertCircle, ExternalLink } from 'lucide-react'
 import { Button } from './ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/Card'
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi'
@@ -13,6 +14,7 @@ import {
     isNetworkSupported,
     getNetworkConfig,
     getSupportedTokens,
+    type Token,
 } from '../config/contracts'
 import {
     appendReferralTag,
@@ -21,6 +23,7 @@ import {
     isReferralEnabled
 } from '../lib/divvi'
 import { CreatorSchema, TipFormSchema, type Creator, type TipFormData } from '../schemas/tipSchemas'
+import { useGToken } from '../hooks/useGToken'
 
 interface TipModalProps {
     creator: Creator
@@ -36,12 +39,21 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
     const [isWrongNetwork, setIsWrongNetwork] = useState(false)
     const [supportedTokens, setSupportedTokens] = useState<Token[]>([])
     const [isApproving, setIsApproving] = useState(false)
+    const [approvalHash, setApprovalHash] = useState<`0x${string}` | null>(null)
 
     const { address, isConnected, chain } = useAccount()
     const chainId = useChainId()
     const { writeContract, data: hash, isPending } = useWriteContract()
     const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
         hash,
+    })
+
+    // Hook para o token G$
+    const { balance: gTokenBalance, decimals: gTokenDecimals, isLoadingBalance } = useGToken()
+
+    // Hook para aprovação
+    const { isLoading: isApprovalConfirming, isSuccess: isApprovalSuccess } = useWaitForTransactionReceipt({
+        hash: approvalHash,
     })
 
     const {
@@ -82,7 +94,7 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
 
                 // Set default token apenas se ainda não tiver um selecionado
                 if (!selectedToken) {
-                    const defaultToken = tokens.find(t => t.symbol === 'USDC') || tokens.find(t => t.isNative) || tokens[0]
+                    const defaultToken = tokens.find(t => t.symbol === 'G$') || tokens.find(t => t.symbol === 'USDC') || tokens.find(t => t.isNative) || tokens[0]
                     setValue('selectedToken', defaultToken)
                 }
 
@@ -95,6 +107,45 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
             }
         }
     }, [chainId, chain, selectedToken, setValue])
+
+    // Efeito para verificar aprovação bem-sucedida
+    useEffect(() => {
+        if (isApprovalSuccess && approvalHash) {
+            setIsApproving(false)
+            setApprovalHash(null)
+            toast.success('Token approved successfully!')
+        }
+    }, [isApprovalSuccess, approvalHash])
+
+    const handleApprove = async (token: Token, amountInUnits: bigint): Promise<boolean> => {
+        return new Promise((resolve) => {
+            try {
+                writeContract({
+                    address: token.address as `0x${string}`,
+                    abi: erc20Abi,
+                    functionName: 'approve',
+                    args: [currentContractAddress as `0x${string}`, amountInUnits],
+                }, {
+                    onSuccess: (hash) => {
+                        setApprovalHash(hash)
+                        toast.success('Approval transaction submitted')
+                        resolve(true)
+                    },
+                    onError: (error) => {
+                        console.error('Approval error:', error)
+                        setIsApproving(false)
+                        toast.error(`Approval failed: ${error.message}`)
+                        resolve(false)
+                    }
+                })
+            } catch (error: any) {
+                console.error('Approval error:', error)
+                setIsApproving(false)
+                toast.error(`Approval failed: ${error.message}`)
+                resolve(false)
+            }
+        })
+    }
 
     const handleTip = async (data: TipFormData) => {
         if (!isConnected) {
@@ -133,22 +184,26 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                     functionName: 'tipETH',
                     args: [creator.address as `0x${string}`, data.message || ''],
                     value: amountInWei,
-                    data: tipData,
                 })
 
             } else {
-                // ERC20 token tipping
+                // ERC20 token tipping (incluindo G$)
                 const amountInUnits = parseUnits(data.amount, data.selectedToken.decimals)
 
                 setIsApproving(true)
 
                 // Primeiro fazemos o approve
-                await writeContract({
-                    address: data.selectedToken.address as `0x${string}`,
-                    abi: erc20Abi,
-                    functionName: 'approve',
-                    args: [currentContractAddress as `0x${string}`, amountInUnits],
-                })
+                const approvalSuccess = await handleApprove(data.selectedToken, amountInUnits)
+
+                if (!approvalSuccess) {
+                    setIsApproving(false)
+                    return
+                }
+
+                // Aguardar a confirmação da aprovação
+                while (isApprovalConfirming) {
+                    await new Promise(resolve => setTimeout(resolve, 1000))
+                }
 
                 // Depois o tip
                 let tipData = encodeFunctionData({
@@ -176,10 +231,7 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                         amountInUnits,
                         data.message || ''
                     ],
-                    data: tipData,
                 })
-
-                setIsApproving(false)
             }
 
             toast.success('Transaction submitted!')
@@ -243,9 +295,12 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
 
     if (!isOpen) return null
 
-    const isProcessing = isPending || isConfirming || isApproving
+    const isProcessing = isPending || isConfirming || isApproving || isApprovalConfirming
     const platformFeeAmount = (parseFloat(amount || '0') * 0.025).toFixed(4)
     const totalAmount = parseFloat(amount || '0').toFixed(4)
+
+    // Verificar se é token G$
+    const isGToken = selectedToken?.symbol === 'G$'
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
@@ -283,8 +338,8 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                                         <div
                                             className={`text-xs px-2 py-1 rounded-full border ${isWrongNetwork
-                                                    ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900 dark:text-red-200'
-                                                    : 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-200'
+                                                ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900 dark:text-red-200'
+                                                : 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-200'
                                                 }`}
                                         >
                                             {isWrongNetwork ? 'Unsupported Network' : getShortNetworkName(chainId)}
@@ -293,6 +348,12 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                                             <div className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-900 dark:text-blue-200 flex items-center gap-1">
                                                 <Check className="h-3 w-3" />
                                                 Divvi Enabled
+                                            </div>
+                                        )}
+                                        {isGToken && (
+                                            <div className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800 border border-green-200 dark:bg-green-900 dark:text-green-200 flex items-center gap-1">
+                                                <Heart className="h-3 w-3" />
+                                                GoodDollar
                                             </div>
                                         )}
                                     </div>
@@ -326,6 +387,36 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                         </div>
                     )}
 
+                    {/* G$ Token Info */}
+                    {isGToken && isConnected && !isWrongNetwork && (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4 dark:bg-green-900/20 dark:border-green-800">
+                            <div className="flex items-start gap-3">
+                                <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                    G
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-green-800 dark:text-green-200 text-sm font-medium">GoodDollar Token</p>
+                                    <p className="text-green-600 dark:text-green-300 text-xs mt-1">
+                                        {isLoadingBalance ? (
+                                            'Loading balance...'
+                                        ) : (
+                                            `Your balance: ${gTokenBalance ? (Number(gTokenBalance) / Math.pow(10, gTokenDecimals)).toFixed(2) : '0.00'} G$`
+                                        )}
+                                    </p>
+                                    <a
+                                        href="https://www.gooddollar.org/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-green-700 dark:text-green-400 text-xs mt-2 flex items-center gap-1 hover:underline"
+                                    >
+                                        Learn more about GoodDollar
+                                        <ExternalLink className="h-3 w-3" />
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <form onSubmit={handleSubmit(handleTip)} className="space-y-4 sm:space-y-6">
                         {/* Token Selection */}
                         <div>
@@ -342,7 +433,10 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                                     <div className="flex items-center space-x-2">
                                         {selectedToken ? (
                                             <>
-                                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold ${isGToken
+                                                        ? 'bg-green-500'
+                                                        : 'bg-gradient-to-br from-blue-500 to-purple-600'
+                                                    }`}>
                                                     {selectedToken.symbol[0]}
                                                 </div>
                                                 <span className="font-medium">{selectedToken.symbol}</span>
@@ -352,6 +446,11 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                                                 {selectedToken.isNative && (
                                                     <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                                                         Native
+                                                    </span>
+                                                )}
+                                                {isGToken && (
+                                                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                                        Universal Basic Income
                                                     </span>
                                                 )}
                                             </>
@@ -374,7 +473,10 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                                                 }}
                                                 className="flex items-center space-x-3 w-full p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left border-b border-gray-100 dark:border-gray-600 last:border-b-0"
                                             >
-                                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold ${token.symbol === 'G$'
+                                                        ? 'bg-green-500'
+                                                        : 'bg-gradient-to-br from-blue-500 to-purple-600'
+                                                    }`}>
                                                     {token.symbol[0]}
                                                 </div>
                                                 <div className="flex-1">
@@ -384,6 +486,11 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                                                 {token.isNative && (
                                                     <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                                                         Native
+                                                    </span>
+                                                )}
+                                                {token.symbol === 'G$' && (
+                                                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                                        UBI
                                                     </span>
                                                 )}
                                                 {selectedToken?.address === token.address && (
@@ -430,7 +537,7 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                                 <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <input
                                     type="number"
-                                    step="0.001"
+                                    step={isGToken ? "0.01" : "0.001"}
                                     min="0"
                                     placeholder={`Custom amount in ${selectedToken?.symbol}`}
                                     {...register('amount')}
@@ -499,6 +606,15 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                                     </span>
                                 </div>
                             )}
+                            {isGToken && (
+                                <div className="flex justify-between items-center">
+                                    <span className="text-muted-foreground">Social Impact</span>
+                                    <span className="font-medium text-green-600 dark:text-green-400 flex items-center gap-1">
+                                        <Heart className="h-3 w-3" />
+                                        UBI Powered
+                                    </span>
+                                </div>
+                            )}
                             <div className="border-t border-gray-200 dark:border-gray-600 pt-3 flex justify-between items-center font-semibold">
                                 <span>Total</span>
                                 <span className="text-lg">
@@ -520,7 +636,10 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                             </Button>
                             <Button
                                 type="submit"
-                                className="flex-1 h-12 bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl"
+                                className={`flex-1 h-12 transition-all shadow-lg hover:shadow-xl ${isGToken
+                                        ? 'bg-gradient-to-br from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700'
+                                        : 'bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
+                                    }`}
                                 disabled={
                                     !isConnected ||
                                     isWrongNetwork ||
@@ -532,12 +651,12 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                                 {isProcessing ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        {isApproving ? 'Approving...' : isPending ? 'Confirming...' : 'Processing...'}
+                                        {isApproving || isApprovalConfirming ? 'Approving...' : isPending ? 'Confirming...' : 'Processing...'}
                                     </>
                                 ) : (
                                     <>
                                         <Heart className="mr-2 h-4 w-4" />
-                                        Send Tip
+                                        {isGToken ? 'Send G$ Tip' : 'Send Tip'}
                                     </>
                                 )}
                             </Button>
