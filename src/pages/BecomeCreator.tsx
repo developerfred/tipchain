@@ -131,7 +131,10 @@ export function BecomeCreator() {
             toast.success('Successfully registered as a creator!')
             navigate('/dashboard')
         }, 2000)
-    } 
+    }
+
+    
+    const isFarcasterMiniApp = typeof window !== 'undefined' && !!window.fc?.miniapp
 
     if (!isConnected && !isMiniApp) {
         return (
@@ -173,7 +176,7 @@ export function BecomeCreator() {
                     {isFarcasterMiniApp && (
                         <Button onClick={() => window.ethereum?.request({
                             method: 'wallet_switchEthereumChain',
-                            params: [{ chainId: '0x2105' }], // Base Mainnet
+                            params: [{ chainId: '0x2105' }], 
                         })}>
                             Switch to Base
                         </Button>

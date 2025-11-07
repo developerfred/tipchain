@@ -1,4 +1,3 @@
-// providers/FarcasterProvider.tsx
 import { createContext, useContext, useEffect, useState } from 'react'
 import { sdk } from '@farcaster/miniapp-sdk'
 
@@ -15,6 +14,7 @@ interface FarcasterContextType {
     user: FarcasterUser | null
     isLoading: boolean
     error: string | null
+    isInitialized: boolean
 }
 
 const FarcasterContext = createContext<FarcasterContextType>({
@@ -22,6 +22,7 @@ const FarcasterContext = createContext<FarcasterContextType>({
     user: null,
     isLoading: true,
     error: null,
+    isInitialized: false,
 })
 
 export function FarcasterProvider({ children }: { children: React.ReactNode }) {
@@ -29,27 +30,28 @@ export function FarcasterProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<FarcasterUser | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [isInitialized, setIsInitialized] = useState(false)
 
     useEffect(() => {
         const initializeFarcaster = async () => {
             try {
-                // Verifica se estamos em um Mini App do Farcaster
+                // Verificar se estamos no Farcaster
                 const inMiniApp = await sdk.isInMiniApp()
                 console.log('📱 Farcaster Mini App detected:', inMiniApp)
                 setIsMiniApp(inMiniApp)
 
                 if (inMiniApp) {
-                    // Inicializa o SDK
+                    // Inicializar SDK
                     await sdk.actions.ready()
-                    
+
                     try {
-                        // Obtém informações do usuário
+                        // Tentar obter dados do usuário
                         const userData = await sdk.user.get()
                         setUser(userData)
                         console.log('👤 Farcaster user data:', userData)
                     } catch (userError) {
                         console.log('⚠️ Could not fetch Farcaster user data:', userError)
-                        setError('Failed to load user data')
+                        // Não é um erro crítico, podemos continuar
                     }
                 }
             } catch (error) {
@@ -58,6 +60,7 @@ export function FarcasterProvider({ children }: { children: React.ReactNode }) {
                 setIsMiniApp(false)
             } finally {
                 setIsLoading(false)
+                setIsInitialized(true)
             }
         }
 
@@ -65,13 +68,18 @@ export function FarcasterProvider({ children }: { children: React.ReactNode }) {
     }, [])
 
     return (
-        <FarcasterContext.Provider value={{ isMiniApp, user, isLoading, error }}>
+        <FarcasterContext.Provider value={{
+            isMiniApp,
+            user,
+            isLoading,
+            error,
+            isInitialized
+        }}>
             {children}
         </FarcasterContext.Provider>
     )
 }
 
-// Hook para usar o contexto do Farcaster
 export function useFarcaster() {
     const context = useContext(FarcasterContext)
     if (context === undefined) {
