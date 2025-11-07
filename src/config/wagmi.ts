@@ -1,6 +1,8 @@
 import { createAppKit } from '@reown/appkit/react'
+import { injected } from "wagmi";
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
 import { base, baseSepolia, mainnet, polygon, optimism, arbitrum, celo } from '@reown/appkit/networks'
+import { farcasterFrame as miniAppConnector } from '@farcaster/frame-wagmi-connector'
 import { QueryClient } from '@tanstack/react-query'
 
 // 1. Get projectId from https://cloud.reown.com
@@ -36,7 +38,7 @@ export const modal = createAppKit({
     features: {
         analytics: true, 
         email: true, 
-        socials: ['google', 'github', 'discord', 'apple'], 
+        socials: ['facebook','x','google', 'github', 'discord', 'apple'], 
         emailShowWallets: true, 
         onramp: true, 
         swaps: true, 
@@ -52,6 +54,7 @@ export const modal = createAppKit({
         'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa', 
         '4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0', 
     ],
+    connectors: [miniAppConnector(), injected()],
 })
 
 
