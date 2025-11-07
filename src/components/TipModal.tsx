@@ -166,9 +166,8 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                     ],
                 })
 
-                // Append Divvi referral tag if enabled
-                if (isReferralEnabled()) {
-                    console.log('📊 Appending Divvi referral tag...')
+                
+                if (isReferralEnabled()) {                
                     tipData = appendReferralTag(tipData, address)
                 }
 
@@ -210,16 +209,14 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
         return networkConfig?.name || 'Unknown'
     }
 
-    // Handle successful transaction
+    
     useEffect(() => {
         const handleSuccess = async () => {
-            if (isSuccess && hash && chainId && address) {
-                // Submit referral to Divvi
+            if (isSuccess && hash && chainId && address) {    
                 if (isReferralEnabled()) {
                     console.log('📤 Submitting referral to Divvi...')
                     await submitDivviReferral(hash, chainId)
-
-                    // Store referral data locally
+                    
                     storeReferralData({
                         txHash: hash,
                         chainId,
@@ -257,8 +254,7 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
         document.addEventListener('keydown', handleEscape)
         return () => document.removeEventListener('keydown', handleEscape)
     }, [isOpen, onClose])
-
-    // Prevent body scroll when modal is open
+    
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden'

@@ -8,24 +8,9 @@ import { TIPCHAIN_ABI, getTipChainContractAddress, isNetworkSupported, DEFAULT_C
 import { isValidBasename } from '../lib/utils'
 import toast from 'react-hot-toast'
 import { useFarcaster } from '../providers/FarcasterProvider'
+import { SmartConnect } from '../components/SmartConnect'
 
 
-// Declaração do tipo para o Farcaster Mini App
-declare global {
-    interface Window {
-        fc?: {
-            miniapp?: {
-                getUser: () => Promise<{
-                    fid: number
-                    username: string
-                    displayName: string
-                    pfpUrl: string
-                    bio: string
-                }>
-            }
-        }
-    }
-}
 
 export function BecomeCreator() {
     const { address, isConnected } = useAccount()
@@ -146,31 +131,26 @@ export function BecomeCreator() {
             toast.success('Successfully registered as a creator!')
             navigate('/dashboard')
         }, 2000)
-    }
+    } 
 
-    // Verificar se estamos no contexto do Farcaster Mini App
-    const isFarcasterMiniApp = typeof window !== 'undefined' && !!window.fc?.miniapp
-
-    if (!isConnected) {
+    if (!isConnected && !isMiniApp) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-900/20">
                 <div className="container py-16">
                     <div className="max-w-4xl mx-auto">
-                        {/* Header */}
                         <div className="text-center mb-16">
                             <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-br from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
-                                {isMiniApp ? "Join TipChain on Farcaster" : "Join TipChain"}
+                                Join TipChain
                             </h1>
-                            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                                {isMiniApp
-                                    ? "Connect your wallet to start receiving tips from your Farcaster followers"
-                                    : "Connect your wallet to start receiving tips from your community"
-                                }
+                            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+                                Connect your wallet to start receiving tips from your community
                             </p>
+                            <div className="flex justify-center">
+                                <SmartConnect />
+                            </div>
                         </div>
-                    <appkit-button />
+                    </div>
                 </div>
-            </div>
             </div>
         )
     }

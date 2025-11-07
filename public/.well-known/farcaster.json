@@ -1,5 +1,5 @@
 {
-"accountAssociation": {
+    "accountAssociation": {
         "header": "eyJmaWQiOjE5NzA0OSwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDFDYjhEMUYzYzc4NTRGQmUwY0U1NjBEYUNGNjc3NWE2OGIyQzNhNTEifQ",
         "payload": "eyJkb21haW4iOiJ0aW1icmEuYWlwb3AuZnVuIn0",
         "signature": "MHgzZWUzN2ZhY2FhOWM2MjEyMDMzNjhmOTRjNDE0YjYyMTY4NzYzMGFjMDdjYTRlZTNiOTk3MDQ4MGY0MGU3YjMwNzE3NzFhMWQzYjk5NDc3ZjA3NDMwYmYxYTJlNTg5ZjE4NDljNjdmY2M4NWFlMDJhNWQwOWE3MTI5NjIyZGUwYjFi"
@@ -12,23 +12,19 @@
         "splashImageUrl": "https://tipchain.aipop.fun/splash.png",
         "splashBackgroundColor": "#000000",
         "webhookUrl": "https://api.neynar.com/f/app/000/event",
-        "subtitle": "Support Creators. Zero Friction.",
-        "description": "Multi-chain tipping platform with gas sponsorship and social login. Support creators across any blockchain.",
+        "subtitle": "Support Creators",
+        "description": "Multi-chain tipping platform with gas sponsorship and social login",
         "primaryCategory": "social",
         "tags": [
             "tipping",
             "creators",
             "multi-chain",
-            "gasless",
-            "social-login",
-            "base",
-            "reown",
-            "monetization"
+            "gasless"
         ],
         "heroImageUrl": "https://tipchain.aipop.fun/api/og/hero",
-        "tagline": "Multi-chain tipping with zero friction",
-        "ogTitle": "TipChain - Support Creators Across Chains",
-        "ogDescription": "Gasless multi-chain tipping platform with social login. Support creators on Base, Ethereum, Solana and more.",
+        "tagline": "Multi-chain tipping",
+        "ogTitle": "TipChain - Support Creators",
+        "ogDescription": "Gasless multi-chain tipping platform with social login",
         "ogImageUrl": "https://tipchain.aipop.fun/api/og/tip",
         "requiredChains": [
             "eip155:8453",

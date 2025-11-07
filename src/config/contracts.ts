@@ -68,6 +68,7 @@ export const isNetworkSupported = (chainId: number | string): boolean => {
 };
 
 
+
 export const getNetworkConfig = (chainId: number | string): NetworkConfig | null => {
   const network = Object.values(SupportedNetworks).find(
     networkKey => NETWORK_CONFIGS[networkKey].chainId === Number(chainId)
