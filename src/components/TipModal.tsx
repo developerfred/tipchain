@@ -44,12 +44,11 @@ import {
   isReferralEnabled,
 } from "../lib/divvi";
 import {
-  CreatorSchema,
   TipFormSchema,
-  type Creator,
   type TipFormData,
 } from "../schemas/tipSchemas";
 import { useGToken } from "../hooks/useGToken";
+import { generateIncentiveLore } from "../lib/utils";
 
 interface TipModalProps {
   creator: {
@@ -67,8 +66,7 @@ const PRESET_AMOUNTS = [1, 5, 10, 25, 50, 100];
 
 export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
   const [showTokenSelector, setShowTokenSelector] = useState(false);
-  const [currentContractAddress, setCurrentContractAddress] =
-    useState<string>("");
+  const [currentContractAddress, setCurrentContractAddress] = useState<string>("");
   const [isWrongNetwork, setIsWrongNetwork] = useState(false);
   const [supportedTokens, setSupportedTokens] = useState<Token[]>([]);
   const [isApproving, setIsApproving] = useState(false);
@@ -127,13 +125,15 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
         const tokens = getSupportedTokens(chainId);
         setSupportedTokens(tokens);
 
-        if (!selectedToken) {
+        if (!selectedToken && tokens.length > 0) {
           const defaultToken =
             tokens.find((t) => t.symbol === "G$") ||
             tokens.find((t) => t.symbol === "USDC") ||
             tokens.find((t) => t.isNative) ||
             tokens[0];
-          setValue("selectedToken", defaultToken);
+          if (defaultToken) {
+            setValue("selectedToken", defaultToken);
+          }
         }
 
         if (isReferralEnabled()) {
@@ -168,12 +168,12 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
             args: [currentContractAddress as `0x${string}`, amountInUnits],
           },
           {
-            onSuccess: (hash) => {
+            onSuccess: (hash: `0x${string}`) => {
               setApprovalHash(hash);
               toast.success("Approval transaction submitted");
               resolve(true);
             },
-            onError: (error) => {
+            onError: (error: Error) => {
               console.error("Approval error:", error);
               setIsApproving(false);
               toast.error(`Approval failed: ${error.message}`);
@@ -207,13 +207,15 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
     }
 
     try {
+      const finalMessage = data.message.trim() === "" ? generateIncentiveLore() : data.message;
+
       if (data.selectedToken.isNative) {
         const amountInWei = parseEther(data.amount);
 
         let tipData = encodeFunctionData({
           abi: TIPCHAIN_ABI,
           functionName: "tipETH",
-          args: [creator.address as `0x${string}`, data.message || ""],
+          args: [creator.address as `0x${string}`, finalMessage],
         });
 
         if (isReferralEnabled()) {
@@ -224,8 +226,8 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
           address: currentContractAddress as `0x${string}`,
           abi: TIPCHAIN_ABI,
           functionName: "tipETH",
-          args: [creator.address as `0x${string}`, data.message || ""],
-          value: amountInWei,
+          args: [creator.address as `0x${string}`, finalMessage],
+          value: amountInWei,          
         });
       } else {
         const amountInUnits = parseUnits(
@@ -244,7 +246,7 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
           setIsApproving(false);
           return;
         }
-
+        
         while (isApprovalConfirming) {
           await new Promise((resolve) => setTimeout(resolve, 1000));
         }
@@ -256,7 +258,7 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
             creator.address as `0x${string}`,
             data.selectedToken.address as `0x${string}`,
             amountInUnits,
-            data.message || "",
+            finalMessage,
           ],
         });
 
@@ -272,7 +274,7 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
             creator.address as `0x${string}`,
             data.selectedToken.address as `0x${string}`,
             amountInUnits,
-            data.message || "",
+            finalMessage,
           ],
         });
       }
@@ -289,18 +291,22 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
     const handleSuccess = async () => {
       if (isSuccess && hash && chainId && address) {
         if (isReferralEnabled()) {
-          await submitDivviReferral(hash, chainId);
-          storeReferralData({
-            txHash: hash,
-            chainId,
-            userAddress: address,
-            timestamp: Date.now(),
-            submitted: true,
-          });
+          try {
+            await submitDivviReferral(hash, chainId);
+            storeReferralData({
+              txHash: hash,
+              chainId,
+              userAddress: address,
+              timestamp: Date.now(),
+              submitted: true,
+            });
+          } catch (error) {
+            console.error("Error submitting referral:", error);
+          }
         }
 
         toast.success(
-          `Successfully tipped ${amount} ${selectedToken?.symbol} to ${creator.displayName}!`,
+          `Successfully tipped ${amount} ${selectedToken?.symbol || ''} to ${creator.displayName}!`,
         );
 
         onClose();
@@ -373,7 +379,7 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                 />
               ) : (
                 <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white text-lg sm:text-2xl font-bold flex-shrink-0 border-2 border-white shadow-lg">
-                  {creator.displayName[0].toUpperCase()}
+                  {creator.displayName[0]?.toUpperCase() || 'C'}
                 </div>
               )}
               <div className="min-w-0 flex-1">
@@ -490,7 +496,7 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                   <p className="text-green-600 dark:text-green-300 text-xs mt-1">
                     {isLoadingBalance
                       ? "Loading balance..."
-                      : `Your balance: ${gTokenBalance ? (Number(gTokenBalance) / Math.pow(10, gTokenDecimals)).toFixed(2) : "0.00"} G$`}
+                      : `Your balance: ${gTokenBalance ? (Number(gTokenBalance) / Math.pow(10, gTokenDecimals || 18)).toFixed(2) : "0.00"} G$`}
                   </p>
                   <a
                     href="https://www.gooddollar.org/"
@@ -646,7 +652,7 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                   type="number"
                   step={isGToken ? "0.01" : "0.001"}
                   min="0"
-                  placeholder={`Custom amount in ${selectedToken?.symbol}`}
+                  placeholder={`Custom amount in ${selectedToken?.symbol || 'token'}`}
                   {...register("amount")}
                   onFocus={() => setValue("customAmount", true)}
                   className="flex h-12 w-full rounded-lg border border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 px-3 py-2 pl-9 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
@@ -666,7 +672,7 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                 Add a Message (Optional)
               </label>
               <textarea
-                placeholder="Say something nice..."
+                placeholder="Say something nice... Leave blank for an inspirational message about supporting creators"
                 {...register("message")}
                 maxLength={200}
                 rows={2}
@@ -690,7 +696,7 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Amount</span>
                 <span className="font-medium">
-                  {amount || "0"} {selectedToken?.symbol}
+                  {amount || "0"} {selectedToken?.symbol || ''}
                 </span>
               </div>
               <div className="flex justify-between items-center">
@@ -698,7 +704,7 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
                   Platform Fee (2.5%)
                 </span>
                 <span className="font-medium">
-                  {platformFeeAmount} {selectedToken?.symbol}
+                  {platformFeeAmount} {selectedToken?.symbol || ''}
                 </span>
               </div>
               <div className="flex justify-between items-center">
@@ -740,7 +746,7 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
               <div className="border-t border-gray-200 dark:border-gray-600 pt-3 flex justify-between items-center font-semibold">
                 <span>Total</span>
                 <span className="text-lg">
-                  {totalAmount} {selectedToken?.symbol}
+                  {totalAmount} {selectedToken?.symbol || ''}
                 </span>
               </div>
             </div>
@@ -806,16 +812,22 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
   );
 }
 
+
 function getCurrentNetworkName(chainId: number | undefined): string {
-  if (!chainId) return "";
+  if (!chainId) return "Unknown Network";
   const networkConfig = getNetworkConfig(chainId);
   return networkConfig?.name || "Unknown Network";
 }
 
 function getShortNetworkName(chainId: number | undefined): string {
-  if (!chainId) return "";
+  if (!chainId) return "Unknown";
   const networkConfig = getNetworkConfig(chainId);
   if (networkConfig?.name.includes("Celo")) return "Celo";
   if (networkConfig?.name.includes("Base")) return "Base";
+  if (networkConfig?.name.includes("Monad")) return "Monad";
+  if (networkConfig?.name.includes("Scroll")) return "Scroll";
+  if (networkConfig?.name.includes("Unichain")) return "Unichain";
+  if (networkConfig?.name.includes("Blast")) return "Blast";
+  if (networkConfig?.name.includes("Optimism")) return "Optimism";
   return networkConfig?.name || "Unknown";
 }
