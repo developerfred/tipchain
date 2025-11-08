@@ -40,7 +40,6 @@ import toast from "react-hot-toast";
 import { useFarcaster } from "../providers/FarcasterProvider";
 import { SmartConnect } from "../components/SmartConnect";
 
-// Componente de Input Moderno
 function ModernInput({
   label,
   value,
@@ -115,7 +114,7 @@ function ModernInput({
   );
 }
 
-// Componente de Preview do Perfil
+
 function ProfilePreview({
   creator,
   isFarcaster = false,
@@ -175,7 +174,6 @@ function ProfilePreview({
   );
 }
 
-// Componente de Step Indicator
 function StepIndicator({
   currentStep,
   totalSteps,
@@ -246,7 +244,7 @@ export function BecomeCreator() {
     hash,
   });
 
-  // Carregar dados do Farcaster
+
   useEffect(() => {
     const loadFarcasterUser = async () => {
       if (isMiniApp && user && !farcasterLoading && isInitialized) {
@@ -344,7 +342,7 @@ export function BecomeCreator() {
     }
   };
 
-  // Redirecionar após sucesso
+
   useEffect(() => {
     if (isSuccess) {
       setTimeout(() => {
@@ -354,7 +352,7 @@ export function BecomeCreator() {
     }
   }, [isSuccess, navigate]);
 
-  // Estados de conexão e rede
+
   if (!isConnected && !isMiniApp) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 flex items-center justify-center p-4">
@@ -409,7 +407,7 @@ export function BecomeCreator() {
     );
   }
 
-  // Conteúdo principal do formulário
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 py-8">
       <div className="max-w-2xl mx-auto p-4 space-y-8">

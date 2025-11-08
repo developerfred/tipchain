@@ -15,7 +15,7 @@ interface UsersState {
     hasSocials: boolean;
   };
 
-  // Paginação
+
   currentPage: number;
   pageSize: number;
   totalCount: number;
@@ -48,7 +48,7 @@ export const useUsersStore = create<UsersState>()(
         hasSocials: false,
       },
       currentPage: 0,
-      pageSize: 50, // Tamanho reduzido para melhor performance
+      pageSize: 50, 
       totalCount: 0,
       hasMore: true,
 
@@ -61,7 +61,6 @@ export const useUsersStore = create<UsersState>()(
 
         try {
           if (refresh) {
-            // Reset para carga inicial
             set({ users: [], currentPage: 0, totalCount: 0, hasMore: true });
           }
 
@@ -159,8 +158,6 @@ export const useUsersStore = create<UsersState>()(
       },
 
       getCreatorStats: async () => {
-        // Para estatísticas, fazemos consultas específicas ao Supabase
-        // em vez de calcular localmente
         try {
           const { count: totalCount } = await supabase
             .from("tipchain_users")
@@ -202,37 +199,15 @@ export const useUsersStore = create<UsersState>()(
     }),
     {
       name: "users-storage",
-      // Armazena apenas dados essenciais no localStorage
+      
       partialize: (state) => ({
         filters: state.filters,
-        searchQuery: state.searchQuery,
-        // Não armazena users no localStorage para evitar quota exceeded
-      }),
-      // Opcional: usar storage alternativo
-      // storage: {
-      //   getItem: (name) => {
-      //     const str = localStorage.getItem(name);
-      //     if (!str) return null;
-      //     return JSON.parse(str);
-      //   },
-      //   setItem: (name, value) => {
-      //     // Limita o tamanho dos dados armazenados
-      //     const limitedValue = {
-      //       ...value,
-      //       state: {
-      //         ...value.state,
-      //         users: value.state.users.slice(0, 1000), // Armazena apenas os primeiros 1000
-      //       },
-      //     };
-      //     localStorage.setItem(name, JSON.stringify(limitedValue));
-      //   },
-      //   removeItem: (name) => localStorage.removeItem(name),
-      // },
+        searchQuery: state.searchQuery,        
+      }),     
     },
   ),
 );
 
-// Funções auxiliares (mantidas iguais)
 function matchesSearch(user: SupabaseUser, searchTerm: string): boolean {
   return (
     user.tipchain_display_name?.toLowerCase().includes(searchTerm) ||

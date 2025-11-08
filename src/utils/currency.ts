@@ -50,7 +50,7 @@ export const NETWORK_CURRENCIES: { [key: number]: NetworkConfig } = {
   },
 };
 
-// Hook para usar o símbolo da moeda atual
+
 export function useCurrency() {
   const chainId = useChainId();
 

@@ -812,7 +812,6 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
   );
 }
 
-
 function getCurrentNetworkName(chainId: number | undefined): string {
   if (!chainId) return "Unknown Network";
   const networkConfig = getNetworkConfig(chainId);
