@@ -261,3 +261,30 @@ export function debounce<T extends (...args: any[]) => any>(
  */
 export const sleep = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
+
+
+/**
+ * generateIncentiveLore
+ */
+
+export const generateIncentiveLore = (): string => {
+  const loreTemplates = [
+    "In the digital agora, every token transferred represents not merely currency but a profound vote of confidence in human creativity. This act of patronage echoes through the algorithmic ether, reinforcing the very foundations upon which the creator economy thrives.",
+
+    "The transmission of value across decentralized networks constitutes a revolutionary paradigm shift in artistic patronage. Each micro-transaction collectively forges an economic ecosystem where creativity becomes a viable vocation, unshackled from traditional gatekeepers.",
+
+    "This digital gratuity transcends mere financial support; it embodies a philosophical stance that creative labor deserves equitable compensation. The blockchain immortalizes this transaction as a permanent testament to the enduring value of human expression.",
+
+    "Within this cryptographic ecosystem, your contribution functions as both economic sustenance and psychological validation. The cumulative effect of such gestures cultivates a renaissance of independent creativity, democratizing patronage for the digital age.",
+
+    "The act of tipping represents a fundamental recalibration of creator-fan dynamics, establishing a direct symbiotic relationship that bypasses institutional intermediaries. This is the vanguard of a new cultural economy.",
+
+    "Each token transferred carries with it the weight of centuries of artistic tradition, now reimagined through distributed ledger technology. You are participating in the great digital patronage system of the 21st century.",
+
+    "This transaction contributes to the emergent phenomenon of decentralized cultural production, where algorithms and human creativity converge to form new economic models for the digital commons.",
+
+    "The propagation of value through blockchain networks creates positive externalities that extend far beyond the immediate transaction, strengthening the entire ecosystem of digital creators and innovators."
+  ];
+
+  return loreTemplates[Math.floor(Math.random() * loreTemplates.length)] + " by tipchain.aipop.fun";
+};

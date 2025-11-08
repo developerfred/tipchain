@@ -1,251 +1,255 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { gql } from "graphql-request";
 import { graphQLClient } from "../services/graphql/client";
-import {
-  useSupabaseUsers,
-  type CombinedCreator,
-  type SupabaseUser,
-} from "./useSupabaseUsers";
-
-const GET_ALL_CREATORS = gql`
-  query GetAllCreators(
-    $limit: Int = 50
-    $offset: Int = 0
-    $orderBy: [Creator_order_by!] = [{ totalAmountReceived: desc }]
-    $where: Creator_bool_exp = {}
-  ) {
-    Creator(limit: $limit, offset: $offset, order_by: $orderBy, where: $where) {
-      id
-      address
-      basename
-      displayName
-      bio
-      avatarUrl
-      registeredAt
-      updatedAt
-      totalAmountReceived
-      totalAmountSent
-      totalTipsReceived
-      totalTipsSent
-      tipCount
-      tippedByCount
-      isActive
-    }
-  }
-`;
-
-const SEARCH_CREATORS = gql`
-  query SearchCreators(
-    $searchTerm: String!
-    $limit: Int = 50
-    $offset: Int = 0
-    $orderBy: [Creator_order_by!] = [{ totalAmountReceived: desc }]
-  ) {
-    Creator(
-      limit: $limit
-      offset: $offset
-      order_by: $orderBy
-      where: {
-        _and: [
-          { isActive: { _eq: true } }
-          {
-            _or: [
-              { displayName: { _ilike: $searchTerm } }
-              { basename: { _ilike: $searchTerm } }
-              { bio: { _ilike: $searchTerm } }
-            ]
-          }
-        ]
-      }
-    ) {
-      id
-      address
-      basename
-      displayName
-      bio
-      avatarUrl
-      registeredAt
-      updatedAt
-      totalAmountReceived
-      totalAmountSent
-      totalTipsReceived
-      totalTipsSent
-      tipCount
-      tippedByCount
-      isActive
-    }
-  }
-`;
-
-const COUNT_ALL_CREATORS = gql`
-  query CountAllCreators($where: Creator_bool_exp = {}) {
-    Creator(where: $where) {
-      id
-    }
-  }
-`;
-
-export interface Creator {
-  id: string;
-  address: string;
-  basename: string;
-  displayName: string;
-  bio: string;
-  avatarUrl: string;
-  registeredAt: string;
-  updatedAt: string;
-  totalAmountReceived: string;
-  totalAmountSent: string;
-  totalTipsReceived: string;
-  totalTipsSent: string;
-  tipCount: number;
-  tippedByCount: number;
-  isActive: boolean;
-}
-
-export interface PlatformStats {
-  totalCreators: number;
-  totalTips: number;
-  totalVolume: bigint;
-}
+import { useUsersStore } from "../stores/useUsersStore";
+import type { CombinedCreator, SupabaseUser } from "./useSupabaseUsers";
 
 export type SortBy =
   | "totalAmountReceived"
   | "tipCount"
   | "registeredAt"
-  | "displayName";
+  | "displayName"
+  | "builderScore";
 export type SortOrder = "asc" | "desc";
 
-interface GraphQLResponse {
-  Creator: Creator[];
-}
-
-interface CountResponse {
-  Creator: { id: string }[];
-}
+const GET_CLAIMED_CREATORS = gql`
+  query GetClaimedCreators(
+    $limit: Int = 100
+    $offset: Int = 0
+    $orderBy: [Creator_order_by!] = [{ totalAmountReceived: desc }]
+  ) {
+    Creator(limit: $limit, offset: $offset, order_by: $orderBy) {
+      id
+      address
+      basename
+      displayName
+      bio
+      avatarUrl
+      registeredAt
+      updatedAt
+      totalAmountReceived
+      totalAmountSent
+      totalTipsReceived
+      totalTipsSent
+      tipCount
+      tippedByCount
+      isActive
+    }
+  }
+`;
 
 interface UseExploreOptions {
-  limit?: number;
+  initialLimit?: number;
   sortBy?: SortBy;
   sortOrder?: SortOrder;
-  onlyActive?: boolean;
+  enableVirtualScroll?: boolean;
 }
 
 export function useExplore(options: UseExploreOptions = {}) {
   const {
-    limit = 50,
+    initialLimit = 50,
     sortBy = "totalAmountReceived",
     sortOrder = "desc",
-    onlyActive = true,
+    enableVirtualScroll = true,
   } = options;
 
-  const [creators, setCreators] = useState<Creator[]>([]);
-  const [platformStats, setPlatformStats] = useState<PlatformStats | null>(
-    null,
+  // Stores
+  const {
+    users: supabaseUsers,
+    filteredUsers,
+    isLoading: supabaseLoading,
+    error: supabaseError,
+    searchQuery,
+    loadUsers,
+    searchUsers,
+    applyFilters,
+    clearFilters,
+    currentPage,
+    hasMore,
+  } = useUsersStore();
+
+  // Estados para GraphQL
+  const [graphqlUsers, setGraphqlUsers] = useState<any[]>([]);
+  const [isLoadingGraphQL, setIsLoadingGraphQL] = useState(false);
+  const [errorGraphQL, setErrorGraphQL] = useState<string | null>(null);
+  const [graphqlOffset, setGraphqlOffset] = useState(0);
+  const [hasMoreGraphQL, setHasMoreGraphQL] = useState(true);
+
+  // Estados combinados
+  const [combinedCreators, setCombinedCreators] = useState<CombinedCreator[]>(
+    [],
   );
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [totalCount, setTotalCount] = useState(0);
-  const [offset, setOffset] = useState(0);
+  const [visibleUsers, setVisibleUsers] = useState<CombinedCreator[]>([]);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  const { users: supabaseUsers, isLoading: supabaseLoading } =
-    useSupabaseUsers();
+  const [localSortBy, setLocalSortBy] = useState<SortBy>(sortBy);
+  const [localSortOrder, setLocalSortOrder] = useState<SortOrder>(sortOrder);
 
-  const convertSupabaseUserToCreator = (
-    user: SupabaseUser,
-  ): CombinedCreator => ({
-    id: user.primary_wallet_address || user.id,
-    address: user.primary_wallet_address!,
-    basename: user.tipchain_basename,
-    displayName: user.tipchain_display_name,
-    bio: user.tipchain_bio,
-    avatarUrl: user.tipchain_avatar_url || user.image_url || "",
-    registeredAt: user.tipchain_created_at,
-    updatedAt: user.updated_at,
-    totalAmountReceived: (user.tipchain_total_tips_received * 1e18).toString(),
-    totalAmountSent: "0",
-    totalTipsReceived: user.tipchain_total_tips_received.toString(),
-    totalTipsSent: "0",
-    tipCount: user.tipchain_tip_count,
-    tippedByCount: user.tipchain_tip_count,
-    isActive: user.tipchain_is_active,
-    source: "supabase",
-    tipchain_registered: user.tipchain_registered,
-    primary_wallet_address: user.primary_wallet_address,
-    builder_score_points: user.builder_score_points,
-    base_builder_score_points: user.base_builder_score_points,
-    twitter_handle: user.twitter_handle,
-    github_handle: user.github_handle,
-    farcaster_handle: user.farcaster_handle,
-    human_checkmark: user.human_checkmark,
-    tags: user.tags,
-  });
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const loadCreators = async (append = false) => {
-    setIsLoading(true);
-    setError(null);
+  // Carregar usuários do GraphQL (contrato)
+  const loadGraphQLUsers = useCallback(
+    async (append = false) => {
+      if (isLoadingGraphQL && !append) return;
 
-    try {
-      const orderBy = { [sortBy]: sortOrder };
-      const where = onlyActive ? { isActive: { _eq: true } } : {};
-      const currentOffset = append ? offset : 0;
+      setIsLoadingGraphQL(true);
+      setErrorGraphQL(null);
 
-      const graphqlData = await graphQLClient.request<GraphQLResponse>(
-        GET_ALL_CREATORS,
-        {
-          limit,
-          offset: currentOffset,
-          orderBy: [orderBy],
-          where,
-        },
-      );
+      try {
+        const currentOffset = append ? graphqlOffset : 0;
 
-      const graphqlCreators: CombinedCreator[] = (
-        graphqlData.Creator || []
-      ).map((creator) => ({
-        ...creator,
-        source: "graphql" as const,
-        tipchain_registered: true,
-        primary_wallet_address: creator.address,
-        id: creator.address,
-      }));
+        const data = await graphQLClient.request<{ Creator: any[] }>(
+          GET_CLAIMED_CREATORS,
+          {
+            limit: initialLimit,
+            offset: currentOffset,
+            orderBy: [{ totalAmountReceived: "desc" }],
+          },
+        );
 
-      console.log("GraphQL creators:", graphqlCreators.length);
+        const newUsers = data.Creator || [];
 
-      // Converter TODOS os usuários do Supabase que têm basename
-      const supabaseCreators: CombinedCreator[] = supabaseUsers
-        .filter(
-          (user) =>
-            user.tipchain_basename &&
-            user.tipchain_basename.trim() !== "" &&
-            user.tipchain_display_name &&
-            user.tipchain_display_name.trim() !== "",
-        )
-        .map(convertSupabaseUserToCreator);
+        if (append) {
+          setGraphqlUsers((prev) => [...prev, ...newUsers]);
+        } else {
+          setGraphqlUsers(newUsers);
+        }
 
-      console.log("Supabase users:", supabaseUsers.length);
-      console.log("Supabase creators:", supabaseCreators.length);
+        setGraphqlOffset(currentOffset + initialLimit);
+        setHasMoreGraphQL(newUsers.length === initialLimit);
+      } catch (err) {
+        console.error("Error loading GraphQL users:", err);
+        setErrorGraphQL(
+          err instanceof Error
+            ? err.message
+            : "Failed to load claimed creators",
+        );
+      } finally {
+        setIsLoadingGraphQL(false);
+      }
+    },
+    [initialLimit, graphqlOffset, isLoadingGraphQL],
+  );
 
-      const allCreators = [...graphqlCreators, ...supabaseCreators];
+  // Combinar e sincronizar dados do Supabase e GraphQL
+  const combineAndSyncUsers = useCallback(
+    (supabaseUsers: SupabaseUser[], graphqlUsers: any[]): CombinedCreator[] => {
+      const walletMap = new Map<string, CombinedCreator>();
 
-      const walletMap = new Map();
-      allCreators.forEach((creator) => {
-        const wallet = creator.primary_wallet_address?.toLowerCase();
-        if (wallet) {
-          if (!walletMap.has(wallet) || creator.source === "graphql") {
-            walletMap.set(wallet, creator);
-          }
+      // Primeiro, adicionar todos os usuários do Supabase
+      supabaseUsers.forEach((user) => {
+        const wallet = user.primary_wallet_address?.toLowerCase();
+        if (!wallet) return;
+
+        const combinedUser: CombinedCreator = {
+          id: user.primary_wallet_address || user.id,
+          address: user.primary_wallet_address!,
+          basename: user.tipchain_basename,
+          displayName: user.tipchain_display_name,
+          bio: user.tipchain_bio,
+          avatarUrl: user.tipchain_avatar_url || user.image_url || "",
+          registeredAt: user.tipchain_created_at,
+          updatedAt: user.updated_at,
+          totalAmountReceived: (
+            user.tipchain_total_tips_received * 1e18
+          ).toString(),
+          totalAmountSent: "0",
+          totalTipsReceived: user.tipchain_total_tips_received.toString(),
+          totalTipsSent: "0",
+          tipCount: user.tipchain_tip_count,
+          tippedByCount: user.tipchain_tip_count,
+          isActive: user.tipchain_is_active,
+          source: "supabase",
+          tipchain_registered: user.tipchain_registered,
+          primary_wallet_address: user.primary_wallet_address,
+          builder_score_points: user.builder_score_points,
+          base_builder_score_points: user.base_builder_score_points,
+          twitter_handle: user.twitter_handle,
+          github_handle: user.github_handle,
+          farcaster_handle: user.farcaster_handle,
+          human_checkmark: user.human_checkmark,
+          tags: user.tags,
+        };
+
+        walletMap.set(wallet, combinedUser);
+      });
+
+      // Agora, sobrescrever/atualizar com dados do GraphQL para usuários que fizeram claim
+      graphqlUsers.forEach((graphqlUser) => {
+        const wallet = graphqlUser.address?.toLowerCase();
+        if (!wallet) return;
+
+        const existingUser = walletMap.get(wallet);
+
+        if (existingUser) {
+          // Usuário existe no Supabase - mesclar dados
+          walletMap.set(wallet, {
+            ...existingUser,
+            // Dados do GraphQL têm prioridade para informações on-chain
+            id: graphqlUser.address,
+            address: graphqlUser.address,
+            basename: graphqlUser.basename || existingUser.basename,
+            displayName: graphqlUser.displayName || existingUser.displayName,
+            bio: graphqlUser.bio || existingUser.bio,
+            avatarUrl: graphqlUser.avatarUrl || existingUser.avatarUrl,
+            registeredAt: graphqlUser.registeredAt || existingUser.registeredAt,
+            totalAmountReceived:
+              graphqlUser.totalAmountReceived ||
+              existingUser.totalAmountReceived,
+            totalTipsReceived:
+              graphqlUser.totalTipsReceived || existingUser.totalTipsReceived,
+            tipCount: graphqlUser.tipCount || existingUser.tipCount,
+            tippedByCount:
+              graphqlUser.tippedByCount || existingUser.tippedByCount,
+            isActive:
+              graphqlUser.isActive !== undefined
+                ? graphqlUser.isActive
+                : existingUser.isActive,
+            // Manter dados sociais e de builder score do Supabase
+            source: "both" as const,
+            tipchain_registered: true, // Se está no GraphQL, fez claim
+          });
+        } else {
+          // Usuário só existe no GraphQL - criar novo registro
+          walletMap.set(wallet, {
+            id: graphqlUser.address,
+            address: graphqlUser.address,
+            basename: graphqlUser.basename,
+            displayName: graphqlUser.displayName,
+            bio: graphqlUser.bio,
+            avatarUrl: graphqlUser.avatarUrl,
+            registeredAt: graphqlUser.registeredAt,
+            updatedAt: graphqlUser.updatedAt,
+            totalAmountReceived: graphqlUser.totalAmountReceived,
+            totalAmountSent: graphqlUser.totalAmountSent,
+            totalTipsReceived: graphqlUser.totalTipsReceived,
+            totalTipsSent: graphqlUser.totalTipsSent,
+            tipCount: graphqlUser.tipCount,
+            tippedByCount: graphqlUser.tippedByCount,
+            isActive: graphqlUser.isActive,
+            source: "graphql",
+            tipchain_registered: true,
+            primary_wallet_address: graphqlUser.address,
+            builder_score_points: 0,
+            base_builder_score_points: 0,
+            twitter_handle: null,
+            github_handle: null,
+            farcaster_handle: null,
+            human_checkmark: false,
+            tags: [],
+          });
         }
       });
 
-      const uniqueCreators = Array.from(walletMap.values());
-      console.log(
-        "Unique creators after deduplication:",
-        uniqueCreators.length,
-      );
+      return Array.from(walletMap.values());
+    },
+    [],
+  );
 
-      const sortedCreators = uniqueCreators.sort((a, b) => {
+  // Ordenar usuários
+  const sortUsers = useCallback(
+    (users: CombinedCreator[], sortBy: SortBy, order: SortOrder) => {
+      return [...users].sort((a, b) => {
         let aValue: any;
         let bValue: any;
 
@@ -258,9 +262,13 @@ export function useExplore(options: UseExploreOptions = {}) {
             aValue = a.tipCount || 0;
             bValue = b.tipCount || 0;
             break;
+          case "builderScore":
+            aValue = a.builder_score_points || 0;
+            bValue = b.builder_score_points || 0;
+            break;
           case "registeredAt":
-            aValue = new Date(a.registeredAt).getTime();
-            bValue = new Date(b.registeredAt).getTime();
+            aValue = new Date(a.registeredAt || 0).getTime();
+            bValue = new Date(b.registeredAt || 0).getTime();
             break;
           case "displayName":
             aValue = a.displayName?.toLowerCase() || "";
@@ -271,173 +279,204 @@ export function useExplore(options: UseExploreOptions = {}) {
             bValue = BigInt(b.totalAmountReceived || "0");
         }
 
-        if (sortOrder === "desc") {
+        if (order === "desc") {
           return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
         } else {
           return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
         }
       });
+    },
+    [],
+  );
 
-      const newCreators = sortedCreators.slice(0, limit);
-
-      if (append) {
-        setCreators((prev) => [...prev, ...newCreators]);
-      } else {
-        setCreators(newCreators);
-      }
-
-      if (!append) {
-        const totalTips = uniqueCreators.reduce(
-          (sum, c) => sum + (c.tipCount || 0),
-          0,
-        );
-        const totalVolume = uniqueCreators.reduce((sum, c) => {
-          return sum + BigInt(c.totalAmountReceived || "0");
-        }, BigInt(0));
-
-        setPlatformStats({
-          totalCreators: uniqueCreators.length,
-          totalTips,
-          totalVolume,
-        });
-        setTotalCount(uniqueCreators.length);
-      }
-
-      if (append) {
-        setOffset(currentOffset + limit);
-      } else {
-        setOffset(limit);
-      }
-    } catch (err) {
-      console.error("Error loading creators:", err);
-      setError(err instanceof Error ? err.message : "Failed to load creators");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const searchCreators = async (term: string, append = false) => {
-    if (!term.trim()) {
-      setSearchQuery("");
-      loadCreators();
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-    setSearchQuery(term);
-
-    try {
-      const graphqlData = await graphQLClient.request<GraphQLResponse>(
-        SEARCH_CREATORS,
-        {
-          searchTerm: `%${term}%`,
-          limit,
-          offset: append ? offset : 0,
-          orderBy: [{ [sortBy]: sortOrder }],
-        },
-      );
-
-      const graphqlCreators: CombinedCreator[] = (
-        graphqlData.Creator || []
-      ).map((creator) => ({
-        ...creator,
-        source: "graphql",
-        tipchain_registered: true,
-      }));
-
-      const searchTerm = term.toLowerCase();
-      const supabaseMatches = supabaseUsers.filter(
-        (user) =>
-          user.tipchain_basename &&
-          user.tipchain_display_name &&
-          (user.tipchain_display_name.toLowerCase().includes(searchTerm) ||
-            user.tipchain_basename.toLowerCase().includes(searchTerm) ||
-            user.tipchain_bio?.toLowerCase().includes(searchTerm) ||
-            user.twitter_handle?.toLowerCase().includes(searchTerm) ||
-            user.github_handle?.toLowerCase().includes(searchTerm) ||
-            user.farcaster_handle?.toLowerCase().includes(searchTerm)),
-      );
-
-      const supabaseCreators: CombinedCreator[] = supabaseMatches.map(
-        convertSupabaseUserToCreator,
-      );
-
-      const combinedResults = [...graphqlCreators, ...supabaseCreators];
-
-      const walletMap = new Map();
-      combinedResults.forEach((creator) => {
-        const wallet = creator.primary_wallet_address?.toLowerCase();
-        if (wallet) {
-          if (!walletMap.has(wallet) || creator.source === "graphql") {
-            walletMap.set(wallet, creator);
-          }
-        }
-      });
-
-      const uniqueResults = Array.from(walletMap.values());
-
-      if (append) {
-        setCreators((prev) => [...prev, ...uniqueResults]);
-      } else {
-        setCreators(uniqueResults);
-        setTotalCount(uniqueResults.length);
-      }
-
-      if (append) {
-        setOffset(offset + limit);
-      } else {
-        setOffset(limit);
-      }
-    } catch (err) {
-      console.error("Error searching creators:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to search creators",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Load more (pagination)
-  const loadMore = async () => {
-    if (searchQuery) {
-      await searchCreators(searchQuery, true);
-    } else {
-      await loadCreators(true);
-    }
-  };
-
-  const reset = () => {
-    setCreators([]);
-    setPlatformStats(null);
-    setSearchQuery("");
-    setTotalCount(0);
-    setOffset(0);
-    setError(null);
-  };
-
+  // Combinar dados quando ambos carregarem
   useEffect(() => {
-    if (!supabaseLoading && supabaseUsers.length > 0) {
-      console.log("Supabase data loaded, loading creators...");
-      loadCreators();
-    }
-  }, [sortBy, sortOrder, onlyActive, supabaseLoading]);
+    if (
+      (supabaseUsers.length > 0 || graphqlUsers.length > 0) &&
+      !supabaseLoading &&
+      !isLoadingGraphQL
+    ) {
+      const combined = combineAndSyncUsers(supabaseUsers, graphqlUsers);
+      setCombinedCreators(combined);
 
-  const hasMore = creators.length < totalCount;
+      console.log("Synchronized users:", {
+        supabase: supabaseUsers.length,
+        graphql: graphqlUsers.length,
+        combined: combined.length,
+        claimed: combined.filter((u) => u.tipchain_registered).length,
+        unclaimed: combined.filter((u) => !u.tipchain_registered).length,
+      });
+    }
+  }, [
+    supabaseUsers,
+    graphqlUsers,
+    supabaseLoading,
+    isLoadingGraphQL,
+    combineAndSyncUsers,
+  ]);
+
+  // Aplicar filtros e ordenação aos usuários combinados
+  useEffect(() => {
+    if (combinedCreators.length === 0) return;
+
+    let filtered = [...combinedCreators];
+
+    // Aplicar ordenação
+    filtered = sortUsers(filtered, localSortBy, localSortOrder);
+
+    // Para virtual scrolling, limitar a exibição
+    if (enableVirtualScroll) {
+      setVisibleUsers(filtered.slice(0, 100));
+    } else {
+      setVisibleUsers(filtered);
+    }
+  }, [
+    combinedCreators,
+    localSortBy,
+    localSortOrder,
+    sortUsers,
+    enableVirtualScroll,
+  ]);
+
+  // Carregar mais dados
+  const handleLoadMore = useCallback(async () => {
+    if (
+      (isLoadingMore || supabaseLoading || isLoadingGraphQL) &&
+      !hasMore &&
+      !hasMoreGraphQL
+    )
+      return;
+
+    setIsLoadingMore(true);
+    try {
+      // Tentar carregar de ambas as fontes
+      await Promise.all([
+        hasMore && loadUsers(currentPage + 1),
+        hasMoreGraphQL && loadGraphQLUsers(true),
+      ]);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [
+    isLoadingMore,
+    supabaseLoading,
+    isLoadingGraphQL,
+    hasMore,
+    hasMoreGraphQL,
+    loadUsers,
+    currentPage,
+    loadGraphQLUsers,
+  ]);
+
+  // Carregar dados iniciais
+  useEffect(() => {
+    if (supabaseUsers.length === 0) {
+      loadUsers(0, true);
+    }
+    if (graphqlUsers.length === 0) {
+      loadGraphQLUsers(false);
+    }
+  }, [loadUsers, loadGraphQLUsers, supabaseUsers.length, graphqlUsers.length]);
+
+  // Setup intersection observer
+  useEffect(() => {
+    if (!enableVirtualScroll) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries[0].isIntersecting &&
+          (hasMore || hasMoreGraphQL) &&
+          !isLoadingMore
+        ) {
+          handleLoadMore();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [
+    enableVirtualScroll,
+    hasMore,
+    hasMoreGraphQL,
+    isLoadingMore,
+    handleLoadMore,
+  ]);
+
+  // Estatísticas
+  const stats = useMemo(() => {
+    const totalTips = combinedCreators.reduce(
+      (sum, c) => sum + (c.tipCount || 0),
+      0,
+    );
+    const totalVolume = combinedCreators.reduce((sum, c) => {
+      const amount = c.totalAmountReceived
+        ? BigInt(c.totalAmountReceived)
+        : BigInt(0);
+      return sum + amount;
+    }, BigInt(0));
+
+    const claimedCreators = combinedCreators.filter(
+      (c) => c.tipchain_registered,
+    ).length;
+    const buildersWithScore = combinedCreators.filter(
+      (c) => (c.builder_score_points || 0) > 0,
+    ).length;
+    const creatorsWithSocials = combinedCreators.filter(
+      (c) => c.twitter_handle || c.github_handle || c.farcaster_handle,
+    ).length;
+
+    return {
+      totalCreators: combinedCreators.length,
+      totalTips,
+      totalVolume,
+      claimedCreators,
+      buildersWithScore,
+      creatorsWithSocials,
+    };
+  }, [combinedCreators]);
 
   return {
-    creators,
-    platformStats,
-    isLoading: isLoading || supabaseLoading,
-    error,
+    // Dados
+    creators: visibleUsers,
+    allCreators: combinedCreators,
+    platformStats: stats,
+    isLoading:
+      (supabaseLoading && supabaseUsers.length === 0) ||
+      (isLoadingGraphQL && graphqlUsers.length === 0),
+    isLoadingMore,
+    error: supabaseError || errorGraphQL,
     searchQuery,
-    totalCount,
-    hasMore,
-    searchCreators,
-    loadCreators,
-    loadMore,
-    reset,
-    setSearchQuery,
+    totalCount: combinedCreators.length,
+    hasMore: hasMore || hasMoreGraphQL,
+
+    // Ações
+    searchUsers,
+    applyFilters,
+    clearFilters,
+    loadMore: handleLoadMore,
+    refresh: () => {
+      loadUsers(0, true);
+      loadGraphQLUsers(false);
+    },
+    setSort: (newSortBy: SortBy, newSortOrder?: SortOrder) => {
+      setLocalSortBy(newSortBy);
+      if (newSortOrder) setLocalSortOrder(newSortOrder);
+    },
+
+    // Estado atual
+    sortBy: localSortBy,
+    sortOrder: localSortOrder,
+
+    // Refs
+    containerRef,
+
+    // Estatísticas
+    stats,
   };
 }
