@@ -1,0 +1,36 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#000000"/>
+  
+  <!-- Background elements -->
+  <path d="M0 0L1200 630" stroke="#333333" stroke-width="2" opacity="0.5"/>
+  <path d="M1200 0L0 630" stroke="#333333" stroke-width="2" opacity="0.5"/>
+  
+  <!-- Content container -->
+  <rect x="100" y="100" width="1000" height="430" rx="20" fill="#1A1A1A" stroke="#333333" stroke-width="2"/>
+  
+  <!-- Logo and title -->
+  <g transform="translate(200, 250)">
+    <circle r="40" stroke="#FFFFFF" stroke-width="3" fill="none"/>
+    <path d="M0 -25L20 5H15V25H-15V5H-20L0 -25Z" fill="#FFFFFF"/>
+    <path d="M-20 45L0 65L20 45H15V25H-15V45H-20Z" fill="#FFFFFF"/>
+    <circle r="4" fill="#FFFFFF"/>
+  </g>
+  
+  <text x="400" y="250" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="48" font-weight="bold">TipChain</text>
+  <text x="400" y="300" fill="#CCCCCC" font-family="Arial, sans-serif" font-size="24">Support Creators Everywhere</text>
+  
+  <!-- Feature list -->
+  <g fill="#FFFFFF" font-family="Arial, sans-serif" font-size="18">
+    <text x="200" y="370">✓ Multi-chain tipping (Base, Ethereum, Polygon)</text>
+    <text x="200" y="400">✓ Gas sponsorship for seamless transactions</text>
+    <text x="200" y="430">✓ Social login with Farcaster</text>
+    <text x="200" y="460">✓ Support your favorite creators</text>
+  </g>
+  
+  <!-- Call to action -->
+  <rect x="200" y="500" width="200" height="50" rx="10" fill="#FFFFFF"/>
+  <text x="300" y="530" text-anchor="middle" fill="#000000" font-family="Arial, sans-serif" font-size="18" font-weight="bold">Try TipChain</text>
+  
+  <!-- URL -->
+  <text x="1000" y="600" text-anchor="end" fill="#CCCCCC" font-family="Arial, sans-serif" font-size="16">tipchain.aipop.fun</text>
+</svg>

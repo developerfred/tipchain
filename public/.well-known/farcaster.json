@@ -7,9 +7,9 @@
   "miniapp": {
     "version": "1",
     "name": "TipChain",
-    "iconUrl": "https://tipchain.aipop.fun/icon.png",
+    "iconUrl": "https://tipchain.aipop.fun/icon.svg",
     "homeUrl": "https://tipchain.aipop.fun",
-    "splashImageUrl": "https://tipchain.aipop.fun/splash.png",
+    "splashImageUrl": "https://tipchain.aipop.fun/splash.svg",
     "splashBackgroundColor": "#000000",
     "webhookUrl": "https://api.neynar.com/f/app/000/event",
     "subtitle": "Support Creators",

@@ -12,6 +12,11 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
+      input: {
+        main: './index.html',
+        'og-hero': './src/api/og/hero',
+        'og-tip': './src/api/og/tip',
+      },
       output: {
         manualChunks: {
           "react-vendor": ["react", "react-dom", "react-router-dom"],
