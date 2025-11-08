@@ -191,10 +191,11 @@ export function CompactCreatorCarousel({
               }).map((_, index) => (
                 <button
                   key={index}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${Math.floor(currentIndex / maxVisible) === index
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    Math.floor(currentIndex / maxVisible) === index
                       ? "bg-gradient-to-r from-blue-500 to-purple-500 w-4"
                       : "bg-gray-300 dark:bg-gray-600 w-1.5 hover:bg-gray-400"
-                    }`}
+                  }`}
                   onClick={() => setCurrentIndex(index * maxVisible)}
                 />
               ))}
@@ -278,12 +279,13 @@ export function CompactCreatorCarousel({
 
                     {/* Status Indicator */}
                     <div
-                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${creator.tipCount > 10
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        creator.tipCount > 10
                           ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-white"
                           : creator.tipCount > 0
                             ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
                             : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
-                        }`}
+                      }`}
                     >
                       {creator.tipCount > 10 ? (
                         <>
@@ -337,10 +339,11 @@ export function CompactCreatorCarousel({
             }).map((_, index) => (
               <button
                 key={index}
-                className={`h-2 rounded-full transition-all duration-300 ${Math.floor(currentIndex / maxVisible) === index
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  Math.floor(currentIndex / maxVisible) === index
                     ? "bg-gradient-to-r from-blue-500 to-purple-500 w-6"
                     : "bg-gray-300 dark:bg-gray-600 w-2"
-                  }`}
+                }`}
                 onClick={() => setCurrentIndex(index * maxVisible)}
               />
             ))}

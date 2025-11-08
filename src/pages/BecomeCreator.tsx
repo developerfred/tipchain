@@ -40,7 +40,6 @@ import toast from "react-hot-toast";
 import { useFarcaster } from "../providers/FarcasterProvider";
 import { SmartConnect } from "../components/SmartConnect";
 
-
 function ModernInput({
   label,
   value,
@@ -174,7 +173,6 @@ function ProfilePreview({
     </div>
   );
 }
-
 
 function StepIndicator({
   currentStep,
@@ -344,7 +342,7 @@ export function BecomeCreator() {
     }
   };
 
-  // Redirecionar após sucesso
+
   useEffect(() => {
     if (isSuccess) {
       setTimeout(() => {
@@ -354,7 +352,7 @@ export function BecomeCreator() {
     }
   }, [isSuccess, navigate]);
 
-  // Estados de conexão e rede
+
   if (!isConnected && !isMiniApp) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 flex items-center justify-center p-4">
@@ -428,8 +426,10 @@ export function BecomeCreator() {
           </p>
         </div>
 
+        {/* Step Indicator */}
         <StepIndicator currentStep={currentStep} totalSteps={3} />
 
+        {/* Form Content */}
         <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
           <CardContent className="p-8">
             {isLoadingUser ? (
@@ -477,6 +477,7 @@ export function BecomeCreator() {
                       required
                     />
 
+                    {/* Preview */}
                     {(formData.basename || formData.displayName) && (
                       <ProfilePreview
                         creator={formData}
@@ -518,7 +519,8 @@ export function BecomeCreator() {
                     </div>
                   </div>
                 )}
-               
+
+                {/* Step 2: Additional Details */}
                 {currentStep === 2 && (
                   <div className="space-y-6">
                     <div className="text-center space-y-2">
@@ -580,7 +582,8 @@ export function BecomeCreator() {
                     </div>
                   </div>
                 )}
-                
+
+                {/* Step 3: Review & Submit */}
                 {currentStep === 3 && (
                   <div className="space-y-6">
                     <div className="text-center space-y-2">
@@ -678,7 +681,7 @@ export function BecomeCreator() {
           </CardContent>
         </Card>
 
-
+        {/* Benefits Cards */}
         <div className="grid gap-6 md:grid-cols-3">
           {[
             {

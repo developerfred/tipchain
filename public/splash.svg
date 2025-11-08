@@ -1,0 +1,9 @@
+<svg width="375" height="667" viewBox="0 0 375 667" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="375" height="667" fill="#000000"/>
+  <circle cx="187.5" cy="333.5" r="80" stroke="#FFFFFF" stroke-width="4"/>
+  <path d="M187.5 253.5L215.5 281.5H207.5V333.5H167.5V281.5H159.5L187.5 253.5Z" fill="#FFFFFF"/>
+  <path d="M159.5 413.5L187.5 441.5L215.5 413.5H207.5V333.5H167.5V413.5H159.5Z" fill="#FFFFFF"/>
+  <circle cx="187.5" cy="333.5" r="8" fill="#FFFFFF"/>
+  <text x="187.5" y="500" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="24" font-weight="bold">TipChain</text>
+  <text x="187.5" y="530" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="16">Multi-chain tipping platform</text>
+</svg>

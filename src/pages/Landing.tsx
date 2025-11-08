@@ -13,6 +13,7 @@ import {
   Heart,
   Rocket,
   CheckCircle,
+  Github
 } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import {
@@ -57,8 +58,33 @@ export function Landing() {
       platformStats?.totalVolume || BigInt(2500000000000000000000000), // 2.5M em wei
   };
 
-  return (
-    <div className="flex flex-col min-h-screen">
+
+  const handleGitHubStar = () => {
+    window.open('https://github.com/developerfred/tipchain', '_blank', 'noopener,noreferrer')
+  }
+
+  return ( 
+      <div className="flex flex-col min-h-screen">
+            {/* GitHub Star Banner */}
+            <div className="bg-gradient-to-r from-gray-900 to-blue-900 text-white py-3 px-4">
+              <div className="container mx-auto flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Github className="h-5 w-5" />
+                  <span className="text-sm font-medium">Love TipChain? Give us a star on GitHub!</span>
+                </div>
+                <Button
+                  onClick={handleGitHubStar}
+                  size="sm"
+                  variant="secondary"
+                  className="bg-white text-gray-900 hover:bg-gray-100"
+                >
+                  <Star className="h-4 w-4 mr-2 fill-current" />
+                  Star
+                </Button>
+              </div>
+            </div>
+
+      
       <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900/20">
         <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] dark:bg-grid-slate-800 dark:[mask-image:linear-gradient(0deg,rgba(255,255,255,0.1),rgba(255,255,255,0.5))]" />
         <div className="container relative flex flex-col items-center justify-center space-y-8 py-24 md:py-32">

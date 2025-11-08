@@ -41,6 +41,13 @@ export function Header() {
               Dashboard
             </Link>
           )}
+          <Link
+            to="/scan"
+            className="text-sm font-medium transition-colors hover:text-primary"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            TipScan
+          </Link>
         </nav>
 
         {/* Desktop Actions */}
@@ -96,6 +103,13 @@ export function Header() {
               onClick={() => setMobileMenuOpen(false)}
             >
               How It Works
+            </Link>
+            <Link
+              to="/scan"
+              className="text-sm font-medium transition-colors hover:text-primary"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              TipScan
             </Link>
             {isConnected && (
               <Link

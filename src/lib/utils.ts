@@ -261,3 +261,24 @@ export function debounce<T extends (...args: any[]) => any>(
  */
 export const sleep = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
+
+
+/**
+ * generateIncentiveLore
+ */
+
+export const generateIncentiveLore = (): string => {
+  const loreTemplates = [
+    "Digital patronage echoes through algorithmic ether, reinforcing creator economy foundations.",
+    "Each token transfer forges an ecosystem where creativity becomes viable vocation.",
+    "Blockchain immortalizes transactions as testament to human expression value.",
+    "Your contribution cultivates a renaissance of independent digital creativity.",
+    "Tipping recalibrates creator-fan dynamics in new cultural economy.",
+    "Participate in the great digital patronage system of the 21st century.",
+    "Decentralized cultural production converges algorithms and human creativity.",
+    "Value propagation strengthens the entire ecosystem of digital innovators."
+  ];
+
+  const lore = loreTemplates[Math.floor(Math.random() * loreTemplates.length)];
+  return (lore + " by tipchain.aipop.fun").slice(0, 100);
+};

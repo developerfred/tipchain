@@ -8,7 +8,6 @@ interface UsersState {
   filteredUsers: SupabaseUser[];
   isLoading: boolean;
   error: string | null;
-  lastFetched: number | null;
   searchQuery: string;
   filters: {
     tipchainRegistered: boolean;
@@ -16,20 +15,24 @@ interface UsersState {
     hasSocials: boolean;
   };
 
+
+  currentPage: number;
+  pageSize: number;
+  totalCount: number;
+  hasMore: boolean;
+
   // Actions
-  loadUsers: () => Promise<void>;
+  loadUsers: (page?: number, refresh?: boolean) => Promise<void>;
   searchUsers: (query: string) => void;
   applyFilters: (filters: Partial<UsersState["filters"]>) => void;
   clearFilters: () => void;
-  getCreatorStats: () => {
+  getCreatorStats: () => Promise<{
     total: number;
     registered: number;
     withBuilderScore: number;
     withSocials: number;
-  };
+  }>;
 }
-
-const CACHE_DURATION = 5 * 60 * 1000;
 
 export const useUsersStore = create<UsersState>()(
   persist(
@@ -38,69 +41,58 @@ export const useUsersStore = create<UsersState>()(
       filteredUsers: [],
       isLoading: false,
       error: null,
-      lastFetched: null,
       searchQuery: "",
       filters: {
         tipchainRegistered: false,
         hasBuilderScore: false,
         hasSocials: false,
       },
+      currentPage: 0,
+      pageSize: 50, 
+      totalCount: 0,
+      hasMore: true,
 
-      loadUsers: async () => {
+      loadUsers: async (page = 0, refresh = false) => {
         const state = get();
 
-        // Verificar cache
-        if (
-          state.lastFetched &&
-          Date.now() - state.lastFetched < CACHE_DURATION
-        ) {
-          return;
-        }
+        if (state.isLoading) return;
 
         set({ isLoading: true, error: null });
 
         try {
-          // Carregar em chunks para não sobrecarregar o Supabase
-          let allUsers: SupabaseUser[] = [];
-          let page = 0;
-          const pageSize = 1000;
-          let hasMore = true;
-
-          while (hasMore) {
-            const { data, error } = await supabase
-              .from("tipchain_users")
-              .select("*")
-              .range(page * pageSize, (page + 1) * pageSize - 1)
-              .order("tipchain_total_tips_received", { ascending: false });
-
-            if (error) throw error;
-
-            if (data && data.length > 0) {
-              allUsers = [...allUsers, ...data];
-              page++;
-
-              // Atualizar estado parcialmente para feedback visual
-              set({
-                users: allUsers,
-                filteredUsers: allUsers,
-                lastFetched: Date.now(),
-              });
-
-              // Continuar carregando se ainda houver dados
-              hasMore = data.length === pageSize;
-            } else {
-              hasMore = false;
-            }
+          if (refresh) {
+            set({ users: [], currentPage: 0, totalCount: 0, hasMore: true });
           }
 
-          console.log(`Loaded ${allUsers.length} users from Supabase`);
+          const { data, error, count } = await supabase
+            .from("tipchain_users")
+            .select("*", { count: "exact" })
+            .order("tipchain_total_tips_received", { ascending: false })
+            .range(page * state.pageSize, (page + 1) * state.pageSize - 1);
+
+          if (error) throw error;
+
+          const newUsers = data || [];
+          const currentUsers = refresh
+            ? newUsers
+            : [...state.users, ...newUsers];
+
+          const hasMoreData = newUsers.length === state.pageSize;
+
+          set({
+            users: currentUsers,
+            filteredUsers: applyAllFilters(currentUsers, state.filters),
+            currentPage: page,
+            totalCount: count || 0,
+            hasMore: hasMoreData,
+            isLoading: false,
+          });
         } catch (err) {
           console.error("Error loading users:", err);
           set({
             error: err instanceof Error ? err.message : "Failed to load users",
+            isLoading: false,
           });
-        } finally {
-          set({ isLoading: false });
         }
       },
 
@@ -133,13 +125,11 @@ export const useUsersStore = create<UsersState>()(
 
         let filtered = users;
 
-        // Aplicar busca primeiro
         if (searchQuery) {
           const searchTerm = searchQuery.toLowerCase();
           filtered = users.filter((user) => matchesSearch(user, searchTerm));
         }
 
-        // Aplicar filtros
         filtered = applyAllFilters(filtered, updatedFilters);
 
         set({
@@ -167,32 +157,57 @@ export const useUsersStore = create<UsersState>()(
         });
       },
 
-      getCreatorStats: () => {
-        const { users } = get();
+      getCreatorStats: async () => {
+        try {
+          const { count: totalCount } = await supabase
+            .from("tipchain_users")
+            .select("*", { count: "exact", head: true });
 
-        return {
-          total: users.length,
-          registered: users.filter((u) => u.tipchain_registered).length,
-          withBuilderScore: users.filter(
-            (u) => (u.builder_score_points || 0) > 0,
-          ).length,
-          withSocials: users.filter(
-            (u) => u.twitter_handle || u.github_handle || u.farcaster_handle,
-          ).length,
-        };
+          const { count: registeredCount } = await supabase
+            .from("tipchain_users")
+            .select("*", { count: "exact", head: true })
+            .eq("tipchain_registered", true);
+
+          const { count: builderScoreCount } = await supabase
+            .from("tipchain_users")
+            .select("*", { count: "exact", head: true })
+            .gt("builder_score_points", 0);
+
+          const { count: socialsCount } = await supabase
+            .from("tipchain_users")
+            .select("*", { count: "exact", head: true })
+            .or(
+              "twitter_handle.not.is.null,github_handle.not.is.null,farcaster_handle.not.is.null",
+            );
+
+          return {
+            total: totalCount || 0,
+            registered: registeredCount || 0,
+            withBuilderScore: builderScoreCount || 0,
+            withSocials: socialsCount || 0,
+          };
+        } catch (error) {
+          console.error("Error fetching stats:", error);
+          return {
+            total: 0,
+            registered: 0,
+            withBuilderScore: 0,
+            withSocials: 0,
+          };
+        }
       },
     }),
     {
       name: "users-storage",
+      
       partialize: (state) => ({
-        users: state.users,
-        lastFetched: state.lastFetched,
-      }),
+        filters: state.filters,
+        searchQuery: state.searchQuery,        
+      }),     
     },
   ),
 );
 
-// Funções auxiliares
 function matchesSearch(user: SupabaseUser, searchTerm: string): boolean {
   return (
     user.tipchain_display_name?.toLowerCase().includes(searchTerm) ||
