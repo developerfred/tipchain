@@ -71,8 +71,11 @@ export const appendReferralTag = (
   try {
     const tag = generateReferralTag(userAddress);
     // Remove '0x' prefix from tag before appending
-    const tagWithoutPrefix = tag.slice(2);
-    return `${data}${tagWithoutPrefix}` as `0x${string}`;
+    const dataWithoutPrefix = data.startsWith('0x') ? data.slice(2) : data;
+    const tagWithoutPrefix = tag.startsWith('0x') ? tag.slice(2) : tag;
+
+    const result = `0x${dataWithoutPrefix}${tagWithoutPrefix}` as `0x${string}`;
+    console.log("Final data with referral:", result);
   } catch (error) {
     console.error("Error appending referral tag:", error);
     return data;
