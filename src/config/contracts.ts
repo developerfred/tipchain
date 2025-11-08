@@ -3,6 +3,11 @@ export enum SupportedNetworks {
   CELO_ALFAJORES = "celo-alfajores",
   BASE = "base",
   BASE_SEPOLIA = "base-sepolia",
+  MONAD_TESTNET = "monad-testnet",
+  SCROLL_SEPOLIA= "scroll-sepolia",
+  OPTIMISM = "optimism",
+  UNICHAIN_SEPOLIA = "unichain-sepolia",
+  BLAST_SEPOLIA = "blast-sepolia"
 }
 
 export interface NetworkConfig {
@@ -33,6 +38,31 @@ export const NETWORK_CONFIGS: Record<SupportedNetworks, NetworkConfig> = {
     name: "Base Sepolia Testnet",
     explorerUrl: "https://sepolia.basescan.org",
   },
+  [SupportedNetworks.MONAD_TESTNET]: {
+    chainId: 10143,
+    name: "Monad Testnet",
+    explorerUrl: "https://testnet.monadscan.com/",
+  },
+  [SupportedNetworks.SCROLL_SEPOLIA]: {
+    chainId: 10143,
+    name: "Monad Testnet",
+    explorerUrl: "https://testnet.monadscan.com/",
+  },
+  [SupportedNetworks.UNICHAIN_SEPOLIA]: {
+    chainId: 10143,
+    name: "Monad Testnet",
+    explorerUrl: "https://testnet.monadscan.com/",
+  },
+  [SupportedNetworks.BLAST_SEPOLIA]: {
+    chainId: 168587773,
+    name: "Blast Sepolia Testnet",
+    explorerUrl: "https://testnet.monadscan.com/",
+  },
+  [SupportedNetworks.OPTIMISM]: {
+    chainId: 10,
+    name: "OPt",
+    explorerUrl: "https://testnet.monadscan.com/",
+  },
 };
 
 export const TIPCHAIN_CONTRACT_ADDRESSES: Record<SupportedNetworks, string> = {
@@ -42,7 +72,17 @@ export const TIPCHAIN_CONTRACT_ADDRESSES: Record<SupportedNetworks, string> = {
   [SupportedNetworks.BASE]: "0x059c8999544260E483D212147da9F082EF0714f9",
   [SupportedNetworks.BASE_SEPOLIA]:
     "0xA1558418153fbfb5799be94f6b238eEC583c8F84",
-};
+  [SupportedNetworks.MONAD_TESTNET]:
+    "0xf5056B96ab242C566002852d0b98ce0BcDf1af51",
+  [SupportedNetworks.SCROLL_SEPOLIA]:
+    "0x7e70D2db47fa8d03F3a292d064bA1B35612F8b39",
+  [SupportedNetworks.OPTIMISM]:
+    "0xa617fd01A71B54FF9e12D1c31B29276570f0A514",
+  [SupportedNetworks.UNICHAIN_SEPOLIA]:
+    "0xf5056B96ab242C566002852d0b98ce0BcDf1af51",
+  [SupportedNetworks.BLAST_SEPOLIA]:
+    "0x097CEaB51539b04FF5E59FDf2Cd39869bC005ba1",
+}; 
 
 export const getTipChainContractAddress = (
   chainId: number | string,
@@ -488,6 +528,133 @@ export const SUPPORTED_TOKENS: Record<number, Token[]> = {
       symbol: "cUSD",
       decimals: 18,
       isNative: false,
+    },
+  ],
+  // Optimism Mainnet
+  10: [
+    {
+      address: "0x0000000000000000000000000000000000000000",
+      name: "Ethereum",
+      symbol: "ETH",
+      decimals: 18,
+      isNative: true,
+    },
+    {
+      address: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
+      name: "USD Coin",
+      symbol: "USDC",
+      decimals: 6,
+      isNative: false,
+    },
+  ],
+  // Scroll Sepolia
+  534351: [
+    {
+      address: "0x0000000000000000000000000000000000000000",
+      name: "Ethereum",
+      symbol: "ETH",
+      decimals: 18,
+      isNative: true,
+    },
+  ],
+  // Blast Sepolia
+  168587773: [
+    {
+      address: "0x0000000000000000000000000000000000000000",
+      name: "Ethereum",
+      symbol: "ETH",
+      decimals: 18,
+      isNative: true,
+    },
+  ],  
+  10143: [
+    {
+      address: "0x0000000000000000000000000000000000000000",
+      name: "Monad",
+      symbol: "MON",
+      decimals: 18,
+      isNative: true,
+    },
+    {
+     
+      "address": "0x0F0BDEbF0F83cD1EE3974779Bcb7315f9808c714",
+      "name": "Molandak",
+      "symbol": "DAK",
+      "decimals": 18,
+      isNative: false,
+      
+    },
+    {
+     
+      "address": "0xE0590015A873bF326bd645c3E1266d4db41C4E6B",
+      "name": "Chog",
+      "symbol": "CHOG",
+      "decimals": 18,
+      isNative: false,
+    },
+    {
+     
+      "address": "0xfe140e1dCe99Be9F4F15d657CD9b7BF622270C50",
+      "name": "Moyaki",
+      "symbol": "YAKI",
+      "decimals": 18,
+      isNative: false,
+    },
+    {
+     
+      "address": "0xf817257fed379853cDe0fa4F97AB987181B1E5Ea",
+      "name": "USD Coin",
+      "symbol": "USDC",
+      "decimals": 6,
+      isNative: false,
+    },
+    {
+     
+      "address": "0x88b8E2161DEDC77EF4ab7585569D2415a1C1055D",
+      "name": "Tether USD",
+      "symbol": "USDT",
+      "decimals": 6,
+      isNative: false,
+    },
+    {
+     
+      "address": "0xcf5a6076cfa32686c0Df13aBaDa2b40dec133F1d",
+      "name": "Wrapped BTC",
+      "symbol": "WBTC",
+      "decimals": 8,
+      isNative: false,
+    },
+    {
+     
+      "address": "0xB5a30b0FDc5EA94A52fDc42e3E9760Cb8449Fb37",
+      "name": "Wrapped ETH",
+      "symbol": "WETH",
+      "decimals": 18,
+      isNative: false,
+    },
+    {
+     
+      "address": "0x5387C85A4965769f6B0Df430638a1388493486F1",
+      "name": "Wrapped SOL",
+      "symbol": "SOL",
+      "decimals": 9,
+      isNative: false,
+    },
+    {      
+      "address": "0x760AfE86e5de5fa0Ee542fc7B7B713e1c5425701",
+      "name": "Wrapped Monad",
+      "symbol": "WMON",
+      "decimals": 18,
+      isNative: false,
+    }
+  ],  
+  1301: [
+    {
+      address: "0x0000000000000000000000000000000000000000",
+      name: "Ethereum",
+      symbol: "ETH",
+      decimals: 18,
+      isNative: true,
     },
   ],
 };

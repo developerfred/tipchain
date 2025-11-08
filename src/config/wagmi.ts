@@ -9,18 +9,22 @@ import {
   optimism,
   arbitrum,
   celo,
+  monadTestnet,
+  blastSepolia,
+  unichainSepolia,
+  scrollSepolia,
+  
 } from "@reown/appkit/networks";
 import { farcasterFrame as miniAppConnector } from "@farcaster/frame-wagmi-connector";
 import { QueryClient } from "@tanstack/react-query";
 
-// 1. Get projectId from https://cloud.reown.com
 export const projectId = import.meta.env.VITE_REOWN_PROJECT_ID;
 
 if (!projectId) {
   throw new Error("VITE_REOWN_PROJECT_ID is not set");
 }
 
-// 2. Set up Wagmi adapter
+
 export const networks = [
   base,
   baseSepolia,
@@ -29,6 +33,10 @@ export const networks = [
   optimism,
   arbitrum,
   celo,
+  monadTestnet,
+  blastSepolia,
+  unichainSepolia,
+  scrollSepolia,
 ];
 
 export const wagmiAdapter = new WagmiAdapter({

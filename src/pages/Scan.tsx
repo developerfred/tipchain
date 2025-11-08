@@ -30,7 +30,7 @@ import { Badge } from "../components/ui/Badge";
 import { graphQLClient } from "../services/graphql/client";
 import { gql } from "graphql-request";
 
-// Tip interface corrigida conforme schema
+
 interface Tip {
     id: string;
     from: {

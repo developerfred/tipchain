@@ -8,28 +8,44 @@ export interface NetworkConfig {
 }
 
 export const NETWORK_CURRENCIES: { [key: number]: NetworkConfig } = {
-  // Base Mainnet
   8453: {
     symbol: "ETH",
     name: "Ethereum",
     decimals: 18,
   },
-  // Base Sepolia Testnet
   84532: {
     symbol: "ETH",
     name: "Ethereum",
     decimals: 18,
   },
-  // Celo Mainnet
   42220: {
     symbol: "CELO",
     name: "Celo",
     decimals: 18,
   },
-  // Celo Alfajores Testnet
   44787: {
     symbol: "CELO",
     name: "Celo",
+    decimals: 18,
+  },
+  10143: {
+    symbol: "MON",
+    name: "Monad",
+    decimals: 18,
+  },
+  534351: {
+    symbol: "ETH",
+    name: "Ethereum",
+    decimals: 18,
+  },
+  10: {
+    symbol: "ETH",
+    name: "Ethereum",
+    decimals: 18,
+  },
+  168587773: {
+    symbol: "ETH",
+    name: "Ethereum",
     decimals: 18,
   },
 };
@@ -58,8 +74,7 @@ export function useCurrency() {
   ): string => {
     const config = getCurrencyConfig();
     const amountBigInt = typeof amount === "string" ? BigInt(amount) : amount;
-
-    // Formata o valor
+    
     const formatted = formatEth(amountBigInt, decimals);
     return `${formatted} ${config.symbol}`;
   };
@@ -73,12 +88,10 @@ export function useCurrency() {
   };
 }
 
-// Função standalone para obter símbolo por chainId
 export function getCurrencySymbolByChainId(chainId: number): string {
   return NETWORK_CURRENCIES[chainId]?.symbol || "ETH";
 }
 
-// Função standalone para obter configuração por chainId
 export function getCurrencyConfigByChainId(chainId: number): NetworkConfig {
   return (
     NETWORK_CURRENCIES[chainId] || {
@@ -89,13 +102,11 @@ export function getCurrencyConfigByChainId(chainId: number): NetworkConfig {
   );
 }
 
-// Função para formatar ETH (ou CELO) value
 export function formatEth(amount: bigint, decimals: number = 4): string {
   const etherValue = Number(amount) / 1e18;
   return etherValue.toFixed(decimals);
 }
 
-// Função para formatar valor com o símbolo correto
 export function formatCurrency(
   amount: string | bigint,
   chainId: number,
@@ -107,7 +118,6 @@ export function formatCurrency(
   return `${formatted} ${symbol}`;
 }
 
-// Função simplificada para usar em componentes
 export function useNetworkCurrency() {
   const chainId = useChainId();
   return getCurrencySymbolByChainId(chainId);
