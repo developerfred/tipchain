@@ -143,9 +143,9 @@ export function KarmaProjects() {
           isOpen={isTipModalOpen}
           onClose={handleCloseTipModal}
           creator={{
-            address: selectedProject.owner.address,
-            basename: selectedProject.slug,
-            displayName: selectedProject.title,
+            address: selectedProject.owner?.address || (selectedProject as any).address || '',
+            basename: selectedProject.slug || (selectedProject as any).basename || '',
+            displayName: selectedProject.title || (selectedProject as any).displayName || 'Untitled Project',
             avatarUrl: selectedProject.logoUrl || '',
             isRegistered: false,
           }}
@@ -167,14 +167,23 @@ function ProjectCard({
   getProjectUrl: (slug: string) => string;
   onTipClick: (project: KarmaProject) => void;
 }) {
+  // Handle both API structures
+  const projectData = project as any;
+  const title = project.title || projectData.displayName || 'Untitled Project';
+  const slug = project.slug || projectData.basename || '';
+  const bannerUrl = project.bannerUrl || projectData.bannerImageUrl;
+  const logoUrl = project.logoUrl || projectData.imageUrl;
+  const category = project.category || projectData.category || 'Other';
+  const description = project.description || projectData.description || '';
+
   return (
     <Card className="group overflow-hidden transition-all hover:shadow-lg">
       {/* Banner */}
-      {project.bannerUrl ? (
+      {bannerUrl ? (
         <div className="h-32 overflow-hidden bg-gradient-to-r from-purple-500 to-pink-500">
           <img
-            src={project.bannerUrl}
-            alt={project.title}
+            src={bannerUrl}
+            alt={title}
             className="h-full w-full object-cover"
           />
         </div>
@@ -186,30 +195,30 @@ function ProjectCard({
       <div className="p-6">
         {/* Logo & Title */}
         <div className="mb-4 flex items-start gap-3">
-          {project.logoUrl ? (
+          {logoUrl ? (
             <img
-              src={project.logoUrl}
-              alt={project.title}
+              src={logoUrl}
+              alt={title}
               className="h-12 w-12 rounded-lg object-cover"
             />
           ) : (
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 text-xl font-bold text-white">
-              {project.title?.charAt(0) || 'P'}
+              {title.charAt(0).toUpperCase()}
             </div>
           )}
           <div className="flex-1">
             <h3 className="font-bold text-gray-900 line-clamp-1">
-              {project.title || 'Untitled Project'}
+              {title}
             </h3>
             <Badge variant="secondary" className="mt-1 text-xs">
-              {project.category}
+              {category}
             </Badge>
           </div>
         </div>
 
         {/* Description */}
         <p className="mb-4 text-sm text-gray-600 line-clamp-3">
-          {project.description}
+          {description}
         </p>
 
         {/* Stats */}
@@ -256,7 +265,7 @@ function ProjectCard({
             Send Tip
           </Button>
           <Button
-            onClick={() => window.open(getProjectUrl(project.slug), '_blank')}
+            onClick={() => window.open(getProjectUrl(slug), '_blank')}
             variant="outline"
             size="sm"
           >
