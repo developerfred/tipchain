@@ -3,7 +3,7 @@
  * Enables tipping to projects listed on Karma GAP
  */
 
-export const KARMA_API_BASE_URL = 'https://gap.karmahq.xyz/api';
+export const KARMA_API_BASE_URL = 'https://tipchain-api.deno.dev';
 export const KARMA_GAP_URL = 'https://gap.karmahq.xyz';
 
 /**

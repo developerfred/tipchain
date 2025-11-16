@@ -1,0 +1,12 @@
+# robots.txt for TipChain
+User-agent: *
+Allow: /
+
+# Disallow admin or internal pages if any
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://tipchain.aipop.fun/sitemap.xml
+
+# Crawl-delay
+Crawl-delay: 1
