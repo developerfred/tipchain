@@ -4,7 +4,7 @@ export enum SupportedNetworks {
   BASE = "base",
   BASE_SEPOLIA = "base-sepolia",
   MONAD_TESTNET = "monad-testnet",
-  SCROLL_SEPOLIA= "scroll-sepolia",
+  SCROLL_SEPOLIA = "scroll-sepolia",
   OPTIMISM = "optimism",
   UNICHAIN_SEPOLIA = "unichain-sepolia",
   BLAST_SEPOLIA = "blast-sepolia"
@@ -41,48 +41,41 @@ export const NETWORK_CONFIGS: Record<SupportedNetworks, NetworkConfig> = {
   [SupportedNetworks.MONAD_TESTNET]: {
     chainId: 10143,
     name: "Monad Testnet",
-    explorerUrl: "https://testnet.monadscan.com/",
+    explorerUrl: "https://testnet.monadscan.com",
   },
   [SupportedNetworks.SCROLL_SEPOLIA]: {
-    chainId: 10143,
-    name: "Monad Testnet",
-    explorerUrl: "https://testnet.monadscan.com/",
+    chainId: 534351,
+    name: "Scroll Sepolia Testnet",
+    explorerUrl: "https://sepolia.scrollscan.com",
   },
   [SupportedNetworks.UNICHAIN_SEPOLIA]: {
-    chainId: 10143,
-    name: "Monad Testnet",
-    explorerUrl: "https://testnet.monadscan.com/",
+    chainId: 1301,
+    name: "Unichain Sepolia Testnet",
+    explorerUrl: "https://sepolia.uniscan.xyz",
   },
   [SupportedNetworks.BLAST_SEPOLIA]: {
     chainId: 168587773,
     name: "Blast Sepolia Testnet",
-    explorerUrl: "https://testnet.monadscan.com/",
+    explorerUrl: "https://testnet.blastscan.io",
   },
   [SupportedNetworks.OPTIMISM]: {
     chainId: 10,
-    name: "OPt",
-    explorerUrl: "https://testnet.monadscan.com/",
+    name: "Optimism Mainnet",
+    explorerUrl: "https://optimistic.etherscan.io",
   },
 };
 
 export const TIPCHAIN_CONTRACT_ADDRESSES: Record<SupportedNetworks, string> = {
   [SupportedNetworks.CELO]: "0x1d4c400F9706a3b6fc9fe4246548954C556b7E2f",
-  [SupportedNetworks.CELO_ALFAJORES]:
-    "0x1d4c400F9706a3b6fc9fe4246548954C556b7E2f",
+  [SupportedNetworks.CELO_ALFAJORES]: "0x1d4c400F9706a3b6fc9fe4246548954C556b7E2f",
   [SupportedNetworks.BASE]: "0x059c8999544260E483D212147da9F082EF0714f9",
-  [SupportedNetworks.BASE_SEPOLIA]:
-    "0xA1558418153fbfb5799be94f6b238eEC583c8F84",
-  [SupportedNetworks.MONAD_TESTNET]:
-    "0xf5056B96ab242C566002852d0b98ce0BcDf1af51",
-  [SupportedNetworks.SCROLL_SEPOLIA]:
-    "0x7e70D2db47fa8d03F3a292d064bA1B35612F8b39",
-  [SupportedNetworks.OPTIMISM]:
-    "0xa617fd01A71B54FF9e12D1c31B29276570f0A514",
-  [SupportedNetworks.UNICHAIN_SEPOLIA]:
-    "0xf5056B96ab242C566002852d0b98ce0BcDf1af51",
-  [SupportedNetworks.BLAST_SEPOLIA]:
-    "0x097CEaB51539b04FF5E59FDf2Cd39869bC005ba1",
-}; 
+  [SupportedNetworks.BASE_SEPOLIA]: "0xA1558418153fbfb5799be94f6b238eEC583c8F84",
+  [SupportedNetworks.MONAD_TESTNET]: "0xf5056B96ab242C566002852d0b98ce0BcDf1af51",
+  [SupportedNetworks.SCROLL_SEPOLIA]: "0x7e70D2db47fa8d03F3a292d064bA1B35612F8b39",
+  [SupportedNetworks.OPTIMISM]: "0xa617fd01A71B54FF9e12D1c31B29276570f0A514",
+  [SupportedNetworks.UNICHAIN_SEPOLIA]: "0xf5056B96ab242C566002852d0b98ce0BcDf1af51",
+  [SupportedNetworks.BLAST_SEPOLIA]: "0x097CEaB51539b04FF5E59FDf2Cd39869bC005ba1",
+};
 
 export const getTipChainContractAddress = (
   chainId: number | string,
@@ -96,12 +89,12 @@ export const getTipChainContractAddress = (
   }
 
   console.warn(
-    `Rede com chainId ${chainId} não suportada. Usando Celo Mainnet como fallback.`,
+    `Rede com chainId ${chainId} não suportada. Usando Base Mainnet como fallback.`,
   );
-  return TIPCHAIN_CONTRACT_ADDRESSES[SupportedNetworks.CELO];
+  return TIPCHAIN_CONTRACT_ADDRESSES[SupportedNetworks.BASE];
 };
 
-export const DEFAULT_CHAIN_ID = 8453;
+export const DEFAULT_CHAIN_ID = 8453; // Base Mainnet
 
 export const isNetworkSupported = (chainId: number | string): boolean => {
   return Object.values(NETWORK_CONFIGS).some(
@@ -120,7 +113,7 @@ export const getNetworkConfig = (
 };
 
 export const TIPCHAIN_CONTRACT_ADDRESS =
-  TIPCHAIN_CONTRACT_ADDRESSES[SupportedNetworks.CELO];
+  TIPCHAIN_CONTRACT_ADDRESSES[SupportedNetworks.BASE];
 
 export const TIPCHAIN_ABI = [
   {
@@ -441,7 +434,7 @@ export interface Token {
 }
 
 export const SUPPORTED_TOKENS: Record<number, Token[]> = {
-  // Base Mainnet
+  // Base Mainnet (8453)
   8453: [
     {
       address: "0x0000000000000000000000000000000000000000",
@@ -465,8 +458,9 @@ export const SUPPORTED_TOKENS: Record<number, Token[]> = {
       isNative: false,
     },
   ],
-  // Base Testnet
-  84531: [
+
+  // Base Sepolia (84532)
+  84532: [
     {
       address: "0x0000000000000000000000000000000000000000",
       name: "Ethereum",
@@ -482,15 +476,9 @@ export const SUPPORTED_TOKENS: Record<number, Token[]> = {
       isNative: false,
     },
   ],
-  // Celo Mainnet
+
+  // Celo Mainnet (42220)
   42220: [
-    {
-      address: "0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A",
-      name: "GoodDollar",
-      symbol: "G$",
-      decimals: 2,
-      isNative: false,
-    },
     {
       address: "0x0000000000000000000000000000000000000000",
       name: "Celo Native",
@@ -512,8 +500,16 @@ export const SUPPORTED_TOKENS: Record<number, Token[]> = {
       decimals: 6,
       isNative: false,
     },
+    {
+      address: "0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A",
+      name: "GoodDollar",
+      symbol: "G$",
+      decimals: 2,
+      isNative: false,
+    },
   ],
-  // Celo Testnet
+
+  // Celo Alfajores Testnet (44787)
   44787: [
     {
       address: "0x0000000000000000000000000000000000000000",
@@ -530,7 +526,8 @@ export const SUPPORTED_TOKENS: Record<number, Token[]> = {
       isNative: false,
     },
   ],
-  // Optimism Mainnet
+
+  // Optimism Mainnet (10)
   10: [
     {
       address: "0x0000000000000000000000000000000000000000",
@@ -546,8 +543,16 @@ export const SUPPORTED_TOKENS: Record<number, Token[]> = {
       decimals: 6,
       isNative: false,
     },
+    {
+      address: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+      name: "Dai Stablecoin",
+      symbol: "DAI",
+      decimals: 18,
+      isNative: false,
+    },
   ],
-  // Scroll Sepolia
+
+  // Scroll Sepolia (534351)
   534351: [
     {
       address: "0x0000000000000000000000000000000000000000",
@@ -557,7 +562,8 @@ export const SUPPORTED_TOKENS: Record<number, Token[]> = {
       isNative: true,
     },
   ],
-  // Blast Sepolia
+
+  // Blast Sepolia (168587773)
   168587773: [
     {
       address: "0x0000000000000000000000000000000000000000",
@@ -566,7 +572,9 @@ export const SUPPORTED_TOKENS: Record<number, Token[]> = {
       decimals: 18,
       isNative: true,
     },
-  ],  
+  ],
+
+  // Monad Testnet (10143)
   10143: [
     {
       address: "0x0000000000000000000000000000000000000000",
@@ -576,78 +584,71 @@ export const SUPPORTED_TOKENS: Record<number, Token[]> = {
       isNative: true,
     },
     {
-     
-      "address": "0x0F0BDEbF0F83cD1EE3974779Bcb7315f9808c714",
-      "name": "Molandak",
-      "symbol": "DAK",
-      "decimals": 18,
-      isNative: false,
-      
-    },
-    {
-     
-      "address": "0xE0590015A873bF326bd645c3E1266d4db41C4E6B",
-      "name": "Chog",
-      "symbol": "CHOG",
-      "decimals": 18,
+      address: "0x0F0BDEbF0F83cD1EE3974779Bcb7315f9808c714",
+      name: "Molandak",
+      symbol: "DAK",
+      decimals: 18,
       isNative: false,
     },
     {
-     
-      "address": "0xfe140e1dCe99Be9F4F15d657CD9b7BF622270C50",
-      "name": "Moyaki",
-      "symbol": "YAKI",
-      "decimals": 18,
+      address: "0xE0590015A873bF326bd645c3E1266d4db41C4E6B",
+      name: "Chog",
+      symbol: "CHOG",
+      decimals: 18,
       isNative: false,
     },
     {
-     
-      "address": "0xf817257fed379853cDe0fa4F97AB987181B1E5Ea",
-      "name": "USD Coin",
-      "symbol": "USDC",
-      "decimals": 6,
+      address: "0xfe140e1dCe99Be9F4F15d657CD9b7BF622270C50",
+      name: "Moyaki",
+      symbol: "YAKI",
+      decimals: 18,
       isNative: false,
     },
     {
-     
-      "address": "0x88b8E2161DEDC77EF4ab7585569D2415a1C1055D",
-      "name": "Tether USD",
-      "symbol": "USDT",
-      "decimals": 6,
+      address: "0xf817257fed379853cDe0fa4F97AB987181B1E5Ea",
+      name: "USD Coin",
+      symbol: "USDC",
+      decimals: 6,
       isNative: false,
     },
     {
-     
-      "address": "0xcf5a6076cfa32686c0Df13aBaDa2b40dec133F1d",
-      "name": "Wrapped BTC",
-      "symbol": "WBTC",
-      "decimals": 8,
+      address: "0x88b8E2161DEDC77EF4ab7585569D2415a1C1055D",
+      name: "Tether USD",
+      symbol: "USDT",
+      decimals: 6,
       isNative: false,
     },
     {
-     
-      "address": "0xB5a30b0FDc5EA94A52fDc42e3E9760Cb8449Fb37",
-      "name": "Wrapped ETH",
-      "symbol": "WETH",
-      "decimals": 18,
+      address: "0xcf5a6076cfa32686c0Df13aBaDa2b40dec133F1d",
+      name: "Wrapped BTC",
+      symbol: "WBTC",
+      decimals: 8,
       isNative: false,
     },
     {
-     
-      "address": "0x5387C85A4965769f6B0Df430638a1388493486F1",
-      "name": "Wrapped SOL",
-      "symbol": "SOL",
-      "decimals": 9,
+      address: "0xB5a30b0FDc5EA94A52fDc42e3E9760Cb8449Fb37",
+      name: "Wrapped ETH",
+      symbol: "WETH",
+      decimals: 18,
       isNative: false,
     },
-    {      
-      "address": "0x760AfE86e5de5fa0Ee542fc7B7B713e1c5425701",
-      "name": "Wrapped Monad",
-      "symbol": "WMON",
-      "decimals": 18,
+    {
+      address: "0x5387C85A4965769f6B0Df430638a1388493486F1",
+      name: "Wrapped SOL",
+      symbol: "SOL",
+      decimals: 9,
       isNative: false,
-    }
-  ],  
+    },
+    {
+      address: "0x760AfE86e5de5fa0Ee542fc7B7B713e1c5425701",
+      name: "Wrapped Monad",
+      symbol: "WMON",
+      decimals: 18,
+      isNative: false,
+    },
+  ],
+
+  // Unichain Sepolia (1301)
   1301: [
     {
       address: "0x0000000000000000000000000000000000000000",
@@ -661,4 +662,30 @@ export const SUPPORTED_TOKENS: Record<number, Token[]> = {
 
 export const getSupportedTokens = (chainId: number): Token[] => {
   return SUPPORTED_TOKENS[chainId] || [];
+};
+
+/**
+ * Get network name by chainId
+ */
+export const getNetworkName = (chainId: number): string => {
+  const config = getNetworkConfig(chainId);
+  return config?.name || `Unknown Network (${chainId})`;
+};
+
+/**
+ * Get explorer URL for transaction
+ */
+export const getExplorerTxUrl = (chainId: number, txHash: string): string => {
+  const config = getNetworkConfig(chainId);
+  if (!config) return '';
+  return `${config.explorerUrl}/tx/${txHash}`;
+};
+
+/**
+ * Get explorer URL for address
+ */
+export const getExplorerAddressUrl = (chainId: number, address: string): string => {
+  const config = getNetworkConfig(chainId);
+  if (!config) return '';
+  return `${config.explorerUrl}/address/${address}`;
 };
