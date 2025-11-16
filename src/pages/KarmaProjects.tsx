@@ -194,12 +194,12 @@ function ProjectCard({
             />
           ) : (
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 text-xl font-bold text-white">
-              {project.title.charAt(0)}
+              {project.title?.charAt(0) || 'P'}
             </div>
           )}
           <div className="flex-1">
             <h3 className="font-bold text-gray-900 line-clamp-1">
-              {project.title}
+              {project.title || 'Untitled Project'}
             </h3>
             <Badge variant="secondary" className="mt-1 text-xs">
               {project.category}
