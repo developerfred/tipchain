@@ -11,16 +11,29 @@ import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { KarmaProject } from '@/services/karma.service';
+import type { KarmaProject } from '@/services/karma.service';
 import { formatCompactNumber } from '@/lib/formatters';
+import { TipModal } from '@/components/TipModal';
 
 export function KarmaProjects() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedProject, setSelectedProject] = useState<KarmaProject | null>(null);
+  const [isTipModalOpen, setIsTipModalOpen] = useState(false);
   const { data: projects, isLoading, error } = useKarmaProjects({ limit: 50 });
   const { data: searchResults } = useKarmaProjectSearch(searchQuery);
   const { getProjectUrl } = useKarmaProjectTip();
 
   const displayProjects = searchQuery ? searchResults : projects;
+
+  const handleOpenTipModal = (project: KarmaProject) => {
+    setSelectedProject(project);
+    setIsTipModalOpen(true);
+  };
+
+  const handleCloseTipModal = () => {
+    setIsTipModalOpen(false);
+    setSelectedProject(null);
+  };
 
   if (isLoading) {
     return <LoadingState message="Loading Karma projects..." />;
@@ -98,7 +111,12 @@ export function KarmaProjects() {
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {displayProjects.map((project) => (
-            <ProjectCard key={project.id} project={project} getProjectUrl={getProjectUrl} />
+            <ProjectCard
+              key={project.id}
+              project={project}
+              getProjectUrl={getProjectUrl}
+              onTipClick={handleOpenTipModal}
+            />
           ))}
         </div>
       )}
@@ -118,6 +136,21 @@ export function KarmaProjects() {
           <ExternalLink className="ml-2 h-4 w-4" />
         </Button>
       </div>
+
+      {/* Tip Modal */}
+      {selectedProject && (
+        <TipModal
+          isOpen={isTipModalOpen}
+          onClose={handleCloseTipModal}
+          creator={{
+            address: selectedProject.owner.address,
+            basename: selectedProject.slug,
+            displayName: selectedProject.title,
+            avatarUrl: selectedProject.logoUrl || '',
+            isRegistered: false,
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -128,14 +161,12 @@ export function KarmaProjects() {
 function ProjectCard({
   project,
   getProjectUrl,
+  onTipClick,
 }: {
   project: KarmaProject;
   getProjectUrl: (slug: string) => string;
+  onTipClick: (project: KarmaProject) => void;
 }) {
-  const getTipUrl = () => {
-    return `/tip/${project.owner.address}`;
-  };
-
   return (
     <Card className="group overflow-hidden transition-all hover:shadow-lg">
       {/* Banner */}
@@ -218,7 +249,7 @@ function ProjectCard({
         {/* Actions */}
         <div className="flex gap-2">
           <Button
-            onClick={() => (window.location.href = getTipUrl())}
+            onClick={() => onTipClick(project)}
             className="flex-1"
             size="sm"
           >

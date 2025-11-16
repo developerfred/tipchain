@@ -49,6 +49,7 @@ import {
 } from "../schemas/tipSchemas";
 import { useGToken } from "../hooks/useGToken";
 import { generateIncentiveLore } from "../lib/utils";
+import { getGasConfig } from "../config/gas";
 
 interface TipModalProps {
   creator: {
@@ -160,12 +161,14 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
   ): Promise<boolean> => {
     return new Promise((resolve) => {
       try {
+        const gasConfig = getGasConfig(chainId);
         writeContract(
           {
             address: token.address as `0x${string}`,
             abi: erc20Abi,
             functionName: "approve",
             args: [currentContractAddress as `0x${string}`, amountInUnits],
+            ...gasConfig,
           },
           {
             onSuccess: (hash: `0x${string}`) => {
@@ -222,12 +225,14 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
           tipData = appendReferralTag(tipData, address);
         }
 
+        const gasConfig = getGasConfig(chainId);
         writeContract({
           address: currentContractAddress as `0x${string}`,
           abi: TIPCHAIN_ABI,
           functionName: "tipETH",
           args: [creator.address as `0x${string}`, finalMessage],
-          value: amountInWei,          
+          value: amountInWei,
+          ...gasConfig,
         });
       } else {
         const amountInUnits = parseUnits(
@@ -266,6 +271,7 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
           tipData = appendReferralTag(tipData, address);
         }
 
+        const gasConfig = getGasConfig(chainId);
         writeContract({
           address: currentContractAddress as `0x${string}`,
           abi: TIPCHAIN_ABI,
@@ -276,6 +282,7 @@ export function TipModal({ creator, isOpen, onClose }: TipModalProps) {
             amountInUnits,
             finalMessage,
           ],
+          ...gasConfig,
         });
       }
 
