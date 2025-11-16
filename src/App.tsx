@@ -9,6 +9,7 @@ import { BecomeCreator } from "./pages/BecomeCreator";
 import { HowItWorks } from "./pages/HowItWorks";
 import { InvestorDeck } from "./pages/Deck";
 import { TipScan } from "./pages/Scan";
+import { KarmaProjects } from "./pages/KarmaProjects";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
               <Route path="/scan/hash/:hash" element={<TipScan />} />
               <Route path="/scan/address/:address" element={<TipScan />} />
               <Route path="/scan/basename/:basename" element={<TipScan />} />
+              <Route path="/projects" element={<KarmaProjects />} />
             </Routes>
           </main>
         </div>
